@@ -1,0 +1,21 @@
+.app {
+  display: flex;
+  min-height: 100vh;
+  background: var(--color-bg-primary);
+}
+
+.main-content {
+  flex: 1;
+  margin-left: 70px;
+  /* Space for mini sidebar */
+  min-height: 100vh;
+  transition: margin-left var(--transition-base);
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 0;
+    padding-top: 60px;
+  }
+}
