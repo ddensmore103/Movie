@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import SearchBar from '../components/SearchBar';
 import ActivityCard from '../components/ActivityCard';
 import MovieCard from '../components/MovieCard';
@@ -8,17 +8,26 @@ import './Home.css';
 
 const Home = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const [recentActivity, setRecentActivity] = useState([]);
     const [recommendedMovies, setRecommendedMovies] = useState([]);
     const [searchResults, setSearchResults] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [isSearching, setIsSearching] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [resetTrigger, setResetTrigger] = useState(0);
 
     useEffect(() => {
         // Load initial data
         loadInitialData();
     }, []);
+
+    // Reset search when navigating to home from elsewhere
+    useEffect(() => {
+        if (location.state?.resetSearch) {
+            resetSearch();
+        }
+    }, [location.state]);
 
     const loadInitialData = async () => {
         setIsLoading(true);
@@ -36,11 +45,16 @@ const Home = () => {
         setIsLoading(false);
     };
 
+    const resetSearch = () => {
+        setIsSearching(false);
+        setSearchResults([]);
+        setSearchQuery('');
+        setResetTrigger(prev => prev + 1); // Trigger SearchBar reset
+    };
+
     const handleSearch = async (query) => {
         if (!query.trim()) {
-            setIsSearching(false);
-            setSearchResults([]);
-            setSearchQuery('');
+            resetSearch();
             return;
         }
 
@@ -56,6 +70,9 @@ const Home = () => {
         }
     };
 
+    // Add navigate function to search handler
+    handleSearch.navigate = navigate;
+
     const handleMovieClick = (movie) => {
         navigate(`/movie/${movie.id}`);
     };
@@ -69,7 +86,7 @@ const Home = () => {
         <div className="home-page">
             {/* Sticky Search Bar */}
             <div className="sticky-search-container">
-                <SearchBar onSearch={handleSearch} />
+                <SearchBar onSearch={handleSearch} resetTrigger={resetTrigger} />
             </div>
 
             <div className="home-content">
@@ -78,7 +95,9 @@ const Home = () => {
                     <section className="activity-section">
                         <div className="section-header">
                             <h2 className="section-title">Recent Activity</h2>
-                            <button className="section-link">View All →</button>
+                            <button className="section-link" onClick={() => navigate('/activity')}>
+                                View All →
+                            </button>
                         </div>
                         <div className="activity-feed">
                             {recentActivity.map((activity) => (
@@ -93,16 +112,14 @@ const Home = () => {
                     <div className="section-header">
                         <h2 className="section-title">{sectionTitle}</h2>
                         {!isSearching && (
-                            <button className="section-link">See More →</button>
+                            <button className="section-link" onClick={() => navigate('/movies')}>
+                                See More →
+                            </button>
                         )}
                         {isSearching && (
                             <button
                                 className="section-link"
-                                onClick={() => {
-                                    setIsSearching(false);
-                                    setSearchResults([]);
-                                    setSearchQuery('');
-                                }}
+                                onClick={resetSearch}
                             >
                                 ← Back to Home
                             </button>

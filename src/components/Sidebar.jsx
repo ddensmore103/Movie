@@ -46,6 +46,7 @@ const Sidebar = () => {
                         <Link
                             key={item.path}
                             to={item.path}
+                            state={item.path === '/' ? { resetSearch: true } : undefined}
                             className={`mini-nav-item ${location.pathname === item.path ? 'active' : ''}`}
                             data-label={item.label}
                         >
@@ -69,6 +70,7 @@ const Sidebar = () => {
                         <Link
                             key={item.path}
                             to={item.path}
+                            state={item.path === '/' ? { resetSearch: true } : undefined}
                             className={`nav-item ${location.pathname === item.path ? 'active' : ''}`}
                             onClick={() => setIsOpen(false)}
                         >
