@@ -1,6 +1,9 @@
+import { useAuth } from '../contexts/AuthContext';
 import './Profile.css';
 
 const Profile = () => {
+    const { currentUser } = useAuth();
+
     const stats = [
         { label: 'Movies Watched', value: 142, icon: '🎬' },
         { label: 'Reviews Written', value: 38, icon: '✍️' },
@@ -14,13 +17,22 @@ const Profile = () => {
         { id: 3, title: 'Interstellar', emoji: '🌌' }
     ];
 
+    // Extract display name from email or use displayName if available
+    const displayName = currentUser?.displayName || currentUser?.email?.split('@')[0] || 'User';
+    const userAvatar = currentUser?.photoURL ? (
+        <img src={currentUser.photoURL} alt="Profile" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+    ) : '👨‍🚀';
+
     return (
         <div className="profile-page">
             <div className="profile-header">
-                <div className="profile-avatar-large">👨‍🚀</div>
+                <div className="profile-avatar-large">{userAvatar}</div>
                 <div className="profile-info">
-                    <h1 className="profile-name">John Doe</h1>
+                    <h1 className="profile-name">{displayName}</h1>
                     <p className="profile-bio">Movie enthusiast | Sci-fi lover | Always looking for hidden gems</p>
+                    <p style={{ fontSize: '0.9rem', opacity: 0.7, marginTop: '8px' }}>
+                        {currentUser?.email}
+                    </p>
                     <button className="btn btn-primary">Edit Profile</button>
                 </div>
             </div>

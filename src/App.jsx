@@ -1,5 +1,8 @@
-import { useState } from 'react';
+import { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { setAuthToken } from './services/api';
+import Auth from './components/Auth';
 import Sidebar from './components/Sidebar';
 import Home from './pages/Home';
 import Lists from './pages/Lists';
@@ -9,202 +12,83 @@ import Settings from './pages/Settings';
 import MovieDetail from './pages/MovieDetail';
 import AllActivity from './pages/AllActivity';
 import AllMovies from './pages/AllMovies';
+import { logout } from './firebase';
 import './App.css';
 
-function App() {
-  // State to store the userId returned from creating a test user
-  const [userId, setUserId] = useState(null);
+/**
+ * Main App Content - Only shown when user is authenticated
+ */
+function AppContent() {
+  const { currentUser, idToken, loading } = useAuth();
 
-  // State to store the list response
-  const [listResponse, setListResponse] = useState(null);
+  // Update API service with current token whenever it changes
+  useEffect(() => {
+    setAuthToken(idToken);
+  }, [idToken]);
 
-  // Loading and error states
-  const [userLoading, setUserLoading] = useState(false);
-  const [listLoading, setListLoading] = useState(false);
-  const [error, setError] = useState(null);
+  // Show loading spinner while checking auth state
+  if (loading) {
+    return (
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '100vh',
+        fontSize: '24px',
+        color: '#667eea'
+      }}>
+        Loading...
+      </div>
+    );
+  }
 
-  /**
-   * Handler for "Create Test User" button
-   * Calls POST http://localhost:5000/users with hardcoded username and email
-   * Stores the returned userId in state
-   */
-  const handleCreateUser = async () => {
-    setUserLoading(true);
-    setError(null);
+  // Show Auth component if user is not logged in
+  if (!currentUser) {
+    return <Auth />;
+  }
 
-    try {
-      // Call the backend API to create a user
-      const response = await fetch('http://localhost:5000/users', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          username: 'testuser123',
-          email: 'testuser@example.com'
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      console.log('User created:', data);
-
-      // Store the userId from the response
-      setUserId(data.userId);
-
-    } catch (err) {
-      console.error('Error creating user:', err);
-      setError(`Failed to create user: ${err.message}`);
-    } finally {
-      setUserLoading(false);
-    }
-  };
-
-  /**
-   * Handler for "Create Test List" button
-   * Uses the stored userId to call POST http://localhost:5000/lists
-   * Creates a list named "My First Watchlist"
-   */
-  const handleCreateList = async () => {
-    if (!userId) {
-      setError('Please create a user first!');
-      return;
-    }
-
-    setListLoading(true);
-    setError(null);
-
-    try {
-      // Call the backend API to create a list
-      const response = await fetch('http://localhost:5000/lists', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ownerId: userId,
-          name: 'My First Watchlist'
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      console.log('List created:', data);
-
-      // Store the list response to display on page
-      setListResponse(data);
-
-    } catch (err) {
-      console.error('Error creating list:', err);
-      setError(`Failed to create list: ${err.message}`);
-    } finally {
-      setListLoading(false);
-    }
-  };
-
+  // Show main app if user is logged in
   return (
     <Router>
       <div className="app">
         <Sidebar />
         <main className="main-content">
-          {/* Dev Testing Section - Remove this in production */}
+          {/* User Info Bar */}
           <div style={{
-            padding: '20px',
-            margin: '20px',
-            border: '2px solid #ccc',
+            padding: '12px 20px',
+            margin: '20px 20px 0 20px',
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            color: 'white',
             borderRadius: '8px',
-            backgroundColor: '#f9f9f9'
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center'
           }}>
-            <h2 style={{ marginTop: 0 }}>🧪 Dev Testing - Backend Connection</h2>
-
-            <div style={{ marginBottom: '15px' }}>
-              <button
-                onClick={handleCreateUser}
-                disabled={userLoading}
-                style={{
-                  padding: '10px 20px',
-                  marginRight: '10px',
-                  fontSize: '16px',
-                  cursor: userLoading ? 'not-allowed' : 'pointer',
-                  backgroundColor: userLoading ? '#ccc' : '#4CAF50',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px'
-                }}
-              >
-                {userLoading ? 'Creating...' : 'Create Test User'}
-              </button>
-
-              <button
-                onClick={handleCreateList}
-                disabled={listLoading || !userId}
-                style={{
-                  padding: '10px 20px',
-                  fontSize: '16px',
-                  cursor: (listLoading || !userId) ? 'not-allowed' : 'pointer',
-                  backgroundColor: (listLoading || !userId) ? '#ccc' : '#2196F3',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px'
-                }}
-              >
-                {listLoading ? 'Creating...' : 'Create Test List'}
-              </button>
+            <div>
+              <strong>👤 Logged in as:</strong> {currentUser.email}
+              <br />
+              <small style={{ opacity: 0.9 }}>UID: {currentUser.uid}</small>
             </div>
-
-            {/* Display error messages */}
-            {error && (
-              <div style={{
-                padding: '10px',
-                marginBottom: '10px',
-                backgroundColor: '#ffebee',
-                color: '#c62828',
-                borderRadius: '4px'
-              }}>
-                ❌ {error}
-              </div>
-            )}
-
-            {/* Display userId when user is created */}
-            {userId && (
-              <div style={{
-                padding: '10px',
-                marginBottom: '10px',
-                backgroundColor: '#e8f5e9',
-                borderRadius: '4px'
-              }}>
-                ✅ <strong>User Created!</strong> userId: <code>{userId}</code>
-              </div>
-            )}
-
-            {/* Display list response when list is created */}
-            {listResponse && (
-              <div style={{
-                padding: '10px',
-                backgroundColor: '#e3f2fd',
-                borderRadius: '4px'
-              }}>
-                ✅ <strong>List Created!</strong>
-                <pre style={{
-                  marginTop: '10px',
-                  padding: '10px',
-                  backgroundColor: '#fff',
-                  borderRadius: '4px',
-                  overflow: 'auto'
-                }}>
-                  {JSON.stringify(listResponse, null, 2)}
-                </pre>
-              </div>
-            )}
+            <button
+              onClick={logout}
+              style={{
+                padding: '8px 16px',
+                background: 'rgba(255, 255, 255, 0.2)',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+                borderRadius: '6px',
+                color: 'white',
+                cursor: 'pointer',
+                fontWeight: '600',
+                transition: 'all 0.2s'
+              }}
+              onMouseOver={(e) => e.target.style.background = 'rgba(255, 255, 255, 0.3)'}
+              onMouseOut={(e) => e.target.style.background = 'rgba(255, 255, 255, 0.2)'}
+            >
+              Logout
+            </button>
           </div>
 
-          {/* Original Routes */}
+          {/* Routes */}
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/movie/:id" element={<MovieDetail />} />
@@ -218,6 +102,17 @@ function App() {
         </main>
       </div>
     </Router>
+  );
+}
+
+/**
+ * Root App Component - Wraps everything with AuthProvider
+ */
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }
 
