@@ -17,8 +17,20 @@ const authMiddleware = require("./authMiddleware");
 const { getOrCreateUser } = require("./userService");
 
 const app = express();
-app.use(cors());
+
+// Enhanced CORS configuration
+app.use(cors({
+    origin: ['http://localhost:5173', 'http://localhost:3000'],
+    credentials: true
+}));
+
 app.use(express.json());
+
+// Request logging middleware for debugging
+app.use((req, res, next) => {
+    console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+    next();
+});
 
 const db = new DynamoDBClient({
     region: process.env.AWS_REGION,
