@@ -12,6 +12,10 @@ const {
 
 const { v4: uuidv4 } = require("uuid");
 
+// Import Firebase auth middleware and user service
+const authMiddleware = require("./authMiddleware");
+const { getOrCreateUser } = require("./userService");
+
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -22,7 +26,7 @@ const db = new DynamoDBClient({
 
 // Root check
 app.get("/", (req, res) => {
-    res.send("Backend running");
+    res.send("Backend running with Firebase Authentication");
 });
 
 // 🔎 Test DB
@@ -36,11 +40,21 @@ app.get("/test-db", async (req, res) => {
     }
 });
 
+// Protected test route - requires Firebase authentication
+app.get("/api/protected", authMiddleware, (req, res) => {
+    res.json({
+        message: "Access granted",
+        uid: req.user.uid,
+        email: req.user.email,
+    });
+});
+
 /* =========================
    USERS
 ========================= */
 
-// ➕ Create user
+// ➕ Create user (legacy endpoint - kept for backward compatibility)
+// Note: Users are now auto-created on first login via Firebase
 app.post("/users", async (req, res) => {
     const { username, email } = req.body;
 
@@ -90,24 +104,31 @@ app.get("/users/:userId", async (req, res) => {
 });
 
 /* =========================
-   LISTS
+   LISTS (Protected Routes)
 ========================= */
 
-app.post("/lists", async (req, res) => {
-    const { ownerId, name } = req.body;
+// ➕ Create list - PROTECTED ROUTE
+// Requires Firebase authentication
+// ownerId is automatically set from Firebase UID
+app.post("/lists", authMiddleware, async (req, res) => {
+    const { name } = req.body;
 
-    if (!ownerId || !name) {
-        return res.status(400).json({ error: "ownerId and name required" });
+    if (!name) {
+        return res.status(400).json({ error: "name is required" });
     }
 
-    const list = {
-        listId: crypto.randomUUID(),
-        ownerId,
-        name,
-        createdAt: new Date().toISOString(),
-    };
-
     try {
+        // Get or create user in DynamoDB using Firebase UID
+        const user = await getOrCreateUser(req.user.uid, req.user.email);
+
+        // Create list with Firebase UID as ownerId
+        const list = {
+            listId: crypto.randomUUID(),
+            ownerId: req.user.uid, // Use Firebase UID, not from request body
+            name,
+            createdAt: new Date().toISOString(),
+        };
+
         await db.send(
             new PutCommand({
                 TableName: "Lists",
@@ -122,16 +143,50 @@ app.post("/lists", async (req, res) => {
     }
 });
 
+// 🔍 Get lists for a specific user - PROTECTED ROUTE
+app.get("/lists/user/:userId", authMiddleware, async (req, res) => {
+    try {
+        const { userId } = req.params;
+
+        // Verify the requesting user is asking for their own lists
+        if (req.user.uid !== userId) {
+            return res.status(403).json({
+                error: "Forbidden: You can only access your own lists"
+            });
+        }
+
+        // Query DynamoDB for lists owned by this user
+        const command = new ScanCommand({
+            TableName: "Lists",
+            FilterExpression: "ownerId = :ownerId",
+            ExpressionAttributeValues: {
+                ":ownerId": userId,
+            },
+        });
+
+        const result = await db.send(command);
+        res.json(result.Items || []);
+    } catch (err) {
+        console.error("GET LISTS ERROR:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.get("/debug-routes", (req, res) => {
     res.json({
         routes: [
-            "POST /users",
-            "POST /lists"
+            "GET / - Health check",
+            "GET /test-db - Test database connection",
+            "GET /api/protected - Test protected route (requires auth)",
+            "POST /users - Create user (legacy)",
+            "GET /users/:userId - Get user by ID",
+            "POST /lists - Create list (protected - requires Firebase auth)",
+            "GET /lists/user/:userId - Get user's lists (protected - requires Firebase auth)"
         ]
     });
 });
 
 
 app.listen(5000, () => {
-    console.log("Server running on port 5000");
+    console.log("Server running on port 5000 with Firebase Authentication");
 });
