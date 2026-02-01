@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import { auth, onAuthStateChanged } from '../firebase';
 
 // Create Auth Context
-const AuthContext = createContext();
+export const AuthContext = createContext();
 
 /**
  * Custom hook to use the Auth context
@@ -42,6 +42,30 @@ export const AuthProvider = ({ children }) => {
                 try {
                     const token = await user.getIdToken();
                     setIdToken(token);
+
+                    // Create user in DynamoDB if they don't exist
+                    // This ensures users appear in search
+                    try {
+                        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/users`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                userId: user.uid,
+                                username: user.displayName || user.email.split('@')[0],
+                                email: user.email,
+                            }),
+                        });
+
+                        // Ignore errors if user already exists
+                        if (response.ok) {
+                            console.log('User created in DynamoDB');
+                        }
+                    } catch (dbError) {
+                        // Silently fail - user might already exist
+                        console.log('User may already exist in DynamoDB');
+                    }
                 } catch (error) {
                     console.error('Error getting ID token:', error);
                     setIdToken(null);

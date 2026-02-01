@@ -6,6 +6,7 @@ import Auth from './components/Auth';
 import Sidebar from './components/Sidebar';
 import Home from './pages/Home';
 import Lists from './pages/Lists';
+import ListDetail from './pages/ListDetail';
 import Friends from './pages/Friends';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
@@ -95,6 +96,7 @@ function AppContent() {
             <Route path="/activity" element={<AllActivity />} />
             <Route path="/movies" element={<AllMovies />} />
             <Route path="/lists" element={<Lists />} />
+            <Route path="/lists/:listId" element={<ListDetail />} />
             <Route path="/friends" element={<Friends />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/settings" element={<Settings />} />

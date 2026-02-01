@@ -1,16 +1,26 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { getUserLists, createList } from '../services/api';
+import { getUserLists, createList, deleteList } from '../services/api';
+import { getImageUrl } from '../services/tmdb';
 import CreateListModal from '../components/CreateListModal';
+import AddMovieToListModal from '../components/AddMovieToListModal';
+import ConfirmationModal from '../components/ConfirmationModal';
 import './Lists.css';
 
 const Lists = () => {
-    const { currentUser } = useAuth();
+    const navigate = useNavigate();
+    const { currentUser, idToken, loading: authLoading } = useAuth();
     const [userLists, setUserLists] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [isCreating, setIsCreating] = useState(false);
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [isAddMovieModalOpen, setIsAddMovieModalOpen] = useState(false);
+    const [selectedList, setSelectedList] = useState(null);
+    const [deletingListId, setDeletingListId] = useState(null);
+    const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+    const [listToDelete, setListToDelete] = useState(null);
 
     // Mock collaborative lists (backend integration pending)
     const collaborativeLists = [
@@ -20,10 +30,18 @@ const Lists = () => {
 
     useEffect(() => {
         loadUserLists();
-    }, [currentUser]);
+    }, [currentUser, idToken, authLoading]);
 
     const loadUserLists = async () => {
-        if (!currentUser) return;
+        // Wait for auth to finish loading before attempting to fetch
+        if (authLoading) {
+            return;
+        }
+
+        if (!currentUser || !idToken) {
+            setLoading(false);
+            return;
+        }
 
         setLoading(true);
         setError(null);
@@ -43,8 +61,7 @@ const Lists = () => {
         try {
             const newList = await createList({ name: listName });
             setUserLists([...userLists, newList]);
-            setIsModalOpen(false);
-            // Success notification could be added here if desired
+            setIsCreateModalOpen(false);
         } catch (err) {
             console.error('Error creating list:', err);
             alert('Failed to create list. Please try again.');
@@ -53,13 +70,45 @@ const Lists = () => {
         }
     };
 
+    const handleDeleteListClick = (list, e) => {
+        e.stopPropagation();
+        setListToDelete(list);
+        setIsConfirmModalOpen(true);
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!listToDelete) return;
+
+        setDeletingListId(listToDelete.listId);
+        try {
+            await deleteList(listToDelete.listId);
+            setUserLists(userLists.filter(list => list.listId !== listToDelete.listId));
+        } catch (err) {
+            console.error('Error deleting list:', err);
+            alert('Failed to delete list. Please try again.');
+        } finally {
+            setDeletingListId(null);
+            setListToDelete(null);
+        }
+    };
+
+    const handleOpenAddMovieModal = (list, e) => {
+        e.stopPropagation(); // Prevent navigation to list detail
+        setSelectedList(list);
+        setIsAddMovieModalOpen(true);
+    };
+
+    const handleListClick = (listId) => {
+        navigate(`/lists/${listId}`);
+    };
+
     return (
         <div className="lists-page">
             <div className="page-header">
                 <h1 className="page-title">My Lists</h1>
                 <button
                     className="btn btn-primary"
-                    onClick={() => setIsModalOpen(true)}
+                    onClick={() => setIsCreateModalOpen(true)}
                 >
                     <span>➕</span>
                     <span>Create New List</span>
@@ -80,10 +129,52 @@ const Lists = () => {
                     ) : userLists.length > 0 ? (
                         <div className="lists-grid">
                             {userLists.map((list) => (
-                                <div key={list.listId} className="list-card">
-                                    <div className="list-emoji">📋</div>
+                                <div
+                                    key={list.listId}
+                                    className="list-card"
+                                    onClick={() => handleListClick(list.listId)}
+                                >
+                                    <div className="list-card-header">
+                                        {(!list.movies || list.movies.length === 0) && (
+                                            <div className="list-emoji">📋</div>
+                                        )}
+                                        <div className="list-actions">
+                                            <button
+                                                className="list-action-btn add-btn"
+                                                onClick={(e) => handleOpenAddMovieModal(list, e)}
+                                                title="Add movies"
+                                            >
+                                                ➕
+                                            </button>
+                                            <button
+                                                className="list-action-btn delete-btn"
+                                                onClick={(e) => handleDeleteListClick(list, e)}
+                                                disabled={deletingListId === list.listId}
+                                                title="Delete list"
+                                            >
+                                                {deletingListId === list.listId ? '⏳' : '🗑️'}
+                                            </button>
+                                        </div>
+                                    </div>
                                     <h3 className="list-name">{list.name}</h3>
-                                    <p className="list-count">0 movies</p>
+                                    <p className="list-count">
+                                        {list.movies?.length || 0} {list.movies?.length === 1 ? 'movie' : 'movies'}
+                                    </p>
+
+                                    {/* Movie Posters Preview */}
+                                    {list.movies && list.movies.length > 0 && (
+                                        <div className="list-posters-preview">
+                                            {list.movies.slice(0, 4).map((movie) => (
+                                                <div key={movie.movieId} className="poster-thumbnail">
+                                                    <img
+                                                        src={getImageUrl(movie.posterPath, 'small', 'poster')}
+                                                        alt={movie.title}
+                                                    />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+
                                     <p style={{ fontSize: '0.8rem', opacity: 0.6, marginTop: '8px' }}>
                                         Created {new Date(list.createdAt).toLocaleDateString()}
                                     </p>
@@ -113,13 +204,43 @@ const Lists = () => {
             </div>
 
             <CreateListModal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
+                isOpen={isCreateModalOpen}
+                onClose={() => setIsCreateModalOpen(false)}
                 onSubmit={handleCreateList}
                 isCreating={isCreating}
+            />
+
+            {selectedList && (
+                <AddMovieToListModal
+                    isOpen={isAddMovieModalOpen}
+                    onClose={() => {
+                        setIsAddMovieModalOpen(false);
+                        setSelectedList(null);
+                    }}
+                    listId={selectedList.listId}
+                    listName={selectedList.name}
+                    onMovieAdded={() => {
+                        // Optionally refresh the list count here
+                        loadUserLists();
+                    }}
+                />
+            )}
+
+            <ConfirmationModal
+                isOpen={isConfirmModalOpen}
+                onClose={() => {
+                    setIsConfirmModalOpen(false);
+                    setListToDelete(null);
+                }}
+                onConfirm={handleConfirmDelete}
+                title="Delete List"
+                message={`Are you sure you want to delete "${listToDelete?.name}"? This will remove all movies from the list.`}
+                confirmText="Delete"
+                confirmStyle="danger"
             />
         </div>
     );
 };
 
 export default Lists;
+

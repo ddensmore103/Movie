@@ -102,6 +102,51 @@ export const getUserLists = async (userId) => {
     return apiFetch(`/lists/user/${userId}`);
 };
 
+/**
+ * Get list by ID with all movies
+ * @param {string} listId - List ID
+ * @returns {Promise<Object>} List with movies
+ */
+export const getListById = async (listId) => {
+    return apiFetch(`/lists/${listId}`);
+};
+
+/**
+ * Delete a list
+ * @param {string} listId - List ID
+ * @returns {Promise<Object>} Deletion confirmation
+ */
+export const deleteList = async (listId) => {
+    return apiFetch(`/lists/${listId}`, {
+        method: 'DELETE',
+    });
+};
+
+/**
+ * Add movie to a list
+ * @param {string} listId - List ID
+ * @param {Object} movieData - Movie data (tmdbId, title, posterPath, releaseDate, rating)
+ * @returns {Promise<Object>} Added movie entry
+ */
+export const addMovieToList = async (listId, movieData) => {
+    return apiFetch(`/lists/${listId}/movies`, {
+        method: 'POST',
+        body: JSON.stringify(movieData),
+    });
+};
+
+/**
+ * Remove movie from a list
+ * @param {string} listId - List ID
+ * @param {string} movieId - Movie ID (internal ID, not TMDB ID)
+ * @returns {Promise<Object>} Removal confirmation
+ */
+export const removeMovieFromList = async (listId, movieId) => {
+    return apiFetch(`/lists/${listId}/movies/${movieId}`, {
+        method: 'DELETE',
+    });
+};
+
 // ==================== TEST ENDPOINTS ====================
 
 /**
@@ -120,11 +165,78 @@ export const testProtected = async () => {
     return apiFetch('/protected');
 };
 
+/* =========================
+   FRIENDS & USER SEARCH
+========================= */
+
+/**
+ * Search for users by username or email
+ * @param {string} query - Search query
+ * @returns {Promise<Array>} Array of matching users
+ */
+export const searchUsers = async (query) => {
+    return apiFetch(`/users/search?q=${encodeURIComponent(query)}`);
+};
+
+/**
+ * Send a friend request to another user
+ * @param {string} toUserId - User ID to send request to
+ * @returns {Promise<Object>} Created friend request
+ */
+export const sendFriendRequest = async (toUserId) => {
+    return apiFetch('/friend-requests', {
+        method: 'POST',
+        body: JSON.stringify({ toUserId }),
+    });
+};
+
+/**
+ * Get pending incoming friend requests
+ * @returns {Promise<Array>} Array of pending requests with user details
+ */
+export const getPendingFriendRequests = async () => {
+    return apiFetch('/friend-requests/pending');
+};
+
+/**
+ * Accept a friend request
+ * @param {string} requestId - Request ID to accept
+ * @returns {Promise<Object>} Success message
+ */
+export const acceptFriendRequest = async (requestId) => {
+    return apiFetch(`/friend-requests/${requestId}/accept`, {
+        method: 'PUT',
+    });
+};
+
+/**
+ * Reject a friend request
+ * @param {string} requestId - Request ID to reject
+ * @returns {Promise<Object>} Success message
+ */
+export const rejectFriendRequest = async (requestId) => {
+    return apiFetch(`/friend-requests/${requestId}/reject`, {
+        method: 'PUT',
+    });
+};
+
+/**
+ * Get the current user's friends list
+ * @returns {Promise<Array>} Array of friends
+ */
+export const getFriends = async () => {
+    return apiFetch('/friends');
+};
+
 export default {
     setAuthToken,
     getUser,
     createUser,
     createList,
     getUserLists,
+    getListById,
+    deleteList,
+    addMovieToList,
+    removeMovieFromList,
     testDatabase,
 };

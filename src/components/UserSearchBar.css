@@ -1,0 +1,125 @@
+.user-search-bar {
+    position: relative;
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto var(--space-lg) auto;
+}
+
+.search-input-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: var(--color-bg-secondary);
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-sm) var(--space-md);
+    transition: all 0.2s ease;
+}
+
+.search-input-container:focus-within {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.search-icon {
+    font-size: 1.2rem;
+    margin-right: var(--space-sm);
+    opacity: 0.6;
+}
+
+.search-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-size: var(--font-size-base);
+    color: var(--color-text);
+    padding: var(--space-xs) 0;
+}
+
+.search-input::placeholder {
+    color: var(--color-secondary);
+}
+
+.loading-spinner {
+    margin-left: var(--space-sm);
+    font-size: 1rem;
+}
+
+.search-results-dropdown {
+    position: absolute;
+    top: calc(100% + var(--space-xs));
+    left: 0;
+    right: 0;
+    background: var(--color-bg-secondary);
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    max-height: 400px;
+    overflow-y: auto;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+}
+
+.search-result-item {
+    padding: var(--space-md);
+    cursor: pointer;
+    transition: background 0.2s ease;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.search-result-item:last-child {
+    border-bottom: none;
+}
+
+.search-result-item:hover {
+    background: var(--color-bg-tertiary);
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--color-bg-tertiary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.user-details {
+    flex: 1;
+    min-width: 0;
+}
+
+.user-name {
+    font-weight: 600;
+    color: var(--color-text);
+    margin-bottom: 2px;
+}
+
+.user-email {
+    font-size: var(--font-size-sm);
+    color: var(--color-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.no-results {
+    padding: var(--space-lg);
+    text-align: center;
+    color: var(--color-secondary);
+}
+
+@media (max-width: 768px) {
+    .user-search-bar {
+        max-width: 100%;
+    }
+}
