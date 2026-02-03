@@ -1,4 +1,5 @@
 import { useState, useEffect, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../contexts/AuthContext';
 import UserSearchBar from '../components/UserSearchBar';
 import {
@@ -11,6 +12,7 @@ import {
 import './Friends.css';
 
 const Friends = () => {
+    const navigate = useNavigate();
     const { currentUser } = useContext(AuthContext);
     const [friends, setFriends] = useState([]);
     const [pendingRequests, setPendingRequests] = useState([]);
@@ -184,7 +186,12 @@ const Friends = () => {
                 {friends.length > 0 ? (
                     <div className="friends-grid">
                         {friends.map((friend) => (
-                            <div key={friend.userId} className="friend-card">
+                            <div
+                                key={friend.userId}
+                                className="friend-card"
+                                onClick={() => navigate(`/profile/${friend.userId}`)}
+                                style={{ cursor: 'pointer' }}
+                            >
                                 <div className="friend-avatar">👤</div>
                                 <h3 className="friend-name">{friend.username || 'Unknown'}</h3>
                                 <p className="friend-email">{friend.email}</p>

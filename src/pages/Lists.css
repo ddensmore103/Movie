@@ -127,6 +127,21 @@
     margin: 0;
 }
 
+.list-badge {
+    display: inline-block;
+    padding: var(--space-xs) var(--space-sm);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    margin-bottom: var(--space-sm);
+}
+
+.collaborating-badge {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+
 .list-members {
     font-size: var(--font-size-sm);
     color: var(--color-secondary);

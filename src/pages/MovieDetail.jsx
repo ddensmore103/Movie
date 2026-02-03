@@ -1,17 +1,28 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import { tmdbAPI, getImageUrl } from '../services/tmdb';
+import { getMovieReviews, createReview, updateReview, deleteReview } from '../services/api';
+import StarRating from '../components/StarRating';
+import ReviewModal from '../components/ReviewModal';
+import ReviewCard from '../components/ReviewCard';
 import './MovieDetail.css';
 
 const MovieDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const { currentUser } = useAuth();
     const [movie, setMovie] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [reviews, setReviews] = useState([]);
+    const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+    const [editingReview, setEditingReview] = useState(null);
+    const [isLoadingReviews, setIsLoadingReviews] = useState(false);
 
     useEffect(() => {
         loadMovieDetails();
+        loadReviews();
     }, [id]);
 
     const loadMovieDetails = async () => {
@@ -27,6 +38,56 @@ const MovieDetail = () => {
             setIsLoading(false);
         }
     };
+
+    const loadReviews = async () => {
+        setIsLoadingReviews(true);
+        try {
+            const reviewsData = await getMovieReviews(id);
+            setReviews(reviewsData);
+        } catch (err) {
+            console.error('Error loading reviews:', err);
+        } finally {
+            setIsLoadingReviews(false);
+        }
+    };
+
+    const handleCreateReview = async (reviewData) => {
+        const newReview = await createReview({
+            movieId: id,
+            tmdbId: id,
+            movieTitle: movie.title,
+            posterPath: movie.poster_path,
+            ...reviewData,
+        });
+        await loadReviews();
+    };
+
+    const handleUpdateReview = async (reviewData) => {
+        await updateReview(editingReview.reviewId, reviewData);
+        setEditingReview(null);
+        await loadReviews();
+    };
+
+    const handleDeleteReview = async (reviewId) => {
+        await deleteReview(reviewId);
+        await loadReviews();
+    };
+
+    const handleEditClick = (review) => {
+        setEditingReview(review);
+        setIsReviewModalOpen(true);
+    };
+
+    const handleCloseModal = () => {
+        setIsReviewModalOpen(false);
+        setEditingReview(null);
+    };
+
+    const userReview = currentUser ? reviews.find(r => r.userId === currentUser.uid) : null;
+    const averageRating = reviews.length > 0
+        ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
+        : 0;
+
 
     if (isLoading) {
         return (
@@ -218,7 +279,75 @@ const MovieDetail = () => {
                         </div>
                     </section>
                 )}
+
+                {/* Reviews Section */}
+                <section className="reviews-section">
+                    <div className="reviews-header">
+                        <div>
+                            <h2 className="section-title">Reviews</h2>
+                            {reviews.length > 0 && (
+                                <div className="reviews-summary">
+                                    <StarRating rating={averageRating} size="medium" />
+                                    <span className="average-rating">
+                                        {averageRating.toFixed(1)} out of 5
+                                    </span>
+                                    <span className="review-count">
+                                        ({reviews.length} {reviews.length === 1 ? 'review' : 'reviews'})
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+                        {currentUser && (
+                            <button
+                                className="btn btn-primary"
+                                onClick={() => {
+                                    if (userReview) {
+                                        handleEditClick(userReview);
+                                    } else {
+                                        setIsReviewModalOpen(true);
+                                    }
+                                }}
+                            >
+                                {userReview ? '✏️ Edit Your Review' : '✍️ Write a Review'}
+                            </button>
+                        )}
+                    </div>
+
+                    {isLoadingReviews ? (
+                        <div style={{ textAlign: 'center', padding: '40px', color: '#888' }}>
+                            Loading reviews...
+                        </div>
+                    ) : reviews.length > 0 ? (
+                        <div className="reviews-list">
+                            {reviews.map(review => (
+                                <ReviewCard
+                                    key={review.reviewId}
+                                    review={review}
+                                    onEdit={handleEditClick}
+                                    onDelete={handleDeleteReview}
+                                />
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="no-reviews">
+                            <p>No reviews yet. Be the first to review this movie!</p>
+                        </div>
+                    )}
+                </section>
             </div>
+
+            {/* Review Modal */}
+            <ReviewModal
+                isOpen={isReviewModalOpen}
+                onClose={handleCloseModal}
+                onSubmit={editingReview ? handleUpdateReview : handleCreateReview}
+                movie={movie ? {
+                    title: movie.title,
+                    posterPath: getImageUrl(movie.poster_path, 'small', 'poster'),
+                    releaseDate: movie.release_date
+                } : null}
+                existingReview={editingReview}
+            />
         </div>
     );
 };

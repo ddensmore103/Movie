@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { getListById, removeMovieFromList } from '../services/api';
 import { getImageUrl } from '../services/tmdb';
 import AddMovieToListModal from '../components/AddMovieToListModal';
+import ManageCollaboratorsModal from '../components/ManageCollaboratorsModal';
 import ConfirmationModal from '../components/ConfirmationModal';
 import './ListDetail.css';
 
@@ -14,6 +15,7 @@ const ListDetail = () => {
     const [error, setError] = useState(null);
     const [removingMovieId, setRemovingMovieId] = useState(null);
     const [isAddMovieModalOpen, setIsAddMovieModalOpen] = useState(false);
+    const [isManageCollaboratorsOpen, setIsManageCollaboratorsOpen] = useState(false);
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
     const [movieToDelete, setMovieToDelete] = useState(null);
 
@@ -110,9 +112,19 @@ const ListDetail = () => {
                 <div className="list-detail-title">
                     <div className="title-row">
                         <h1>{list.name}</h1>
-                        <button className="add-movies-btn" onClick={handleOpenAddMovieModal}>
-                            ➕ Add Movies
-                        </button>
+                        <div className="header-buttons">
+                            {list.isOwner && (
+                                <button
+                                    className="manage-collaborators-btn"
+                                    onClick={() => setIsManageCollaboratorsOpen(true)}
+                                >
+                                    👥 Manage Collaborators
+                                </button>
+                            )}
+                            <button className="add-movies-btn" onClick={handleOpenAddMovieModal}>
+                                ➕ Add Movies
+                            </button>
+                        </div>
                     </div>
                     <p className="list-detail-meta">
                         {list.movies?.length || 0} {list.movies?.length === 1 ? 'movie' : 'movies'}
@@ -197,6 +209,17 @@ const ListDetail = () => {
                 confirmText="Remove"
                 confirmStyle="danger"
             />
+
+            {isManageCollaboratorsOpen && (
+                <ManageCollaboratorsModal
+                    listId={listId}
+                    isOwner={list?.isOwner}
+                    onClose={() => {
+                        setIsManageCollaboratorsOpen(false);
+                        loadListDetails(); // Refresh list to show updated collaborators
+                    }}
+                />
+            )}
         </div>
     );
 };

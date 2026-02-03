@@ -98,6 +98,7 @@ function AppContent() {
             <Route path="/lists" element={<Lists />} />
             <Route path="/lists/:listId" element={<ListDetail />} />
             <Route path="/friends" element={<Friends />} />
+            <Route path="/profile/:userId" element={<Profile />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/settings" element={<Settings />} />
           </Routes>

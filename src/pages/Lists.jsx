@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { getUserLists, createList, deleteList } from '../services/api';
+import { getUserLists, createList, deleteList, getCollaboratingLists } from '../services/api';
 import { getImageUrl } from '../services/tmdb';
 import CreateListModal from '../components/CreateListModal';
 import AddMovieToListModal from '../components/AddMovieToListModal';
@@ -12,6 +12,7 @@ const Lists = () => {
     const navigate = useNavigate();
     const { currentUser, idToken, loading: authLoading } = useAuth();
     const [userLists, setUserLists] = useState([]);
+    const [collaboratingLists, setCollaboratingLists] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [isCreating, setIsCreating] = useState(false);
@@ -21,12 +22,6 @@ const Lists = () => {
     const [deletingListId, setDeletingListId] = useState(null);
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
     const [listToDelete, setListToDelete] = useState(null);
-
-    // Mock collaborative lists (backend integration pending)
-    const collaborativeLists = [
-        { id: 5, name: 'Best Sci-Fi Ever', count: 45, members: 8, emoji: '🚀' },
-        { id: 6, name: 'Horror Classics', count: 28, members: 5, emoji: '👻' }
-    ];
 
     useEffect(() => {
         loadUserLists();
@@ -46,8 +41,13 @@ const Lists = () => {
         setLoading(true);
         setError(null);
         try {
-            const lists = await getUserLists(currentUser.uid);
-            setUserLists(lists);
+            // Fetch both owned lists and collaborating lists in parallel
+            const [ownedLists, collabLists] = await Promise.all([
+                getUserLists(currentUser.uid),
+                getCollaboratingLists()
+            ]);
+            setUserLists(ownedLists);
+            setCollaboratingLists(collabLists);
         } catch (err) {
             console.error('Error loading lists:', err);
             setError('Failed to load lists. Please try again.');
@@ -188,19 +188,59 @@ const Lists = () => {
                     )}
                 </section>
 
-                <section className="lists-section">
-                    <h2 className="section-title">Collaborative Lists</h2>
-                    <div className="lists-grid">
-                        {collaborativeLists.map((list) => (
-                            <div key={list.id} className="list-card collaborative">
-                                <div className="list-emoji">{list.emoji}</div>
-                                <h3 className="list-name">{list.name}</h3>
-                                <p className="list-count">{list.count} movies</p>
-                                <p className="list-members">👥 {list.members} members</p>
-                            </div>
-                        ))}
-                    </div>
-                </section>
+                {/* Collaborating Lists Section */}
+                {collaboratingLists.length > 0 && (
+                    <section className="lists-section">
+                        <h2 className="section-title">🤝 Collaborating</h2>
+                        <div className="lists-grid">
+                            {collaboratingLists.map((list) => (
+                                <div
+                                    key={list.listId}
+                                    className="list-card collaborative"
+                                    onClick={() => handleListClick(list.listId)}
+                                >
+                                    <div className="list-card-header">
+                                        {(!list.movies || list.movies.length === 0) && (
+                                            <div className="list-emoji">📋</div>
+                                        )}
+                                        <div className="list-actions">
+                                            <button
+                                                className="list-action-btn add-btn"
+                                                onClick={(e) => handleOpenAddMovieModal(list, e)}
+                                                title="Add movies"
+                                            >
+                                                ➕
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div className="list-badge collaborating-badge">Collaborating</div>
+                                    <h3 className="list-name">{list.name}</h3>
+                                    <p className="list-count">
+                                        {list.movies?.length || 0} {list.movies?.length === 1 ? 'movie' : 'movies'}
+                                    </p>
+
+                                    {/* Movie Posters Preview */}
+                                    {list.movies && list.movies.length > 0 && (
+                                        <div className="list-posters-preview">
+                                            {list.movies.slice(0, 4).map((movie) => (
+                                                <div key={movie.movieId} className="poster-thumbnail">
+                                                    <img
+                                                        src={getImageUrl(movie.posterPath, 'small', 'poster')}
+                                                        alt={movie.title}
+                                                    />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+
+                                    <p style={{ fontSize: '0.8rem', opacity: 0.6, marginTop: '8px' }}>
+                                        Created {new Date(list.createdAt).toLocaleDateString()}
+                                    </p>
+                                </div>
+                            ))}
+                        </div>
+                    </section>
+                )}
             </div>
 
             <CreateListModal

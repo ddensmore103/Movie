@@ -220,6 +220,118 @@ export const rejectFriendRequest = async (requestId) => {
     });
 };
 
+/* =========================
+   LIST COLLABORATORS
+========================= */
+
+/**
+ * Add a collaborator to a list
+ * @param {string} listId - List ID
+ * @param {string} userId - User ID to add as collaborator
+ * @returns {Promise<Object>} Collaborator record
+ */
+export const addCollaborator = async (listId, userId) => {
+    return apiFetch(`/lists/${listId}/collaborators`, {
+        method: 'POST',
+        body: JSON.stringify({ userId }),
+    });
+};
+
+/**
+ * Remove a collaborator from a list
+ * @param {string} listId - List ID
+ * @param {string} userId - User ID to remove
+ * @returns {Promise<Object>} Success message
+ */
+export const removeCollaborator = async (listId, userId) => {
+    return apiFetch(`/lists/${listId}/collaborators/${userId}`, {
+        method: 'DELETE',
+    });
+};
+
+/**
+ * Get all collaborators for a list
+ * @param {string} listId - List ID
+ * @returns {Promise<Array>} Array of collaborators with user details
+ */
+export const getListCollaborators = async (listId) => {
+    return apiFetch(`/lists/${listId}/collaborators`);
+};
+
+/**
+ * Get all lists the current user is collaborating on
+ * @returns {Promise<Array>} Array of lists
+ */
+export const getCollaboratingLists = async () => {
+    return apiFetch('/lists/collaborating');
+};
+
+/* =========================
+   MOVIE REVIEWS
+========================= */
+
+/**
+ * Create a new review for a movie
+ * @param {Object} reviewData - Review data (movieId, tmdbId, rating, reviewText, watchDate, movieTitle, posterPath)
+ * @returns {Promise<Object>} Created review
+ */
+export const createReview = async (reviewData) => {
+    return apiFetch('/reviews', {
+        method: 'POST',
+        body: JSON.stringify(reviewData),
+    });
+};
+
+/**
+ * Update an existing review
+ * @param {string} reviewId - Review ID
+ * @param {Object} reviewData - Updated review data (rating, reviewText, watchDate)
+ * @returns {Promise<Object>} Updated review
+ */
+export const updateReview = async (reviewId, reviewData) => {
+    return apiFetch(`/reviews/${reviewId}`, {
+        method: 'PUT',
+        body: JSON.stringify(reviewData),
+    });
+};
+
+/**
+ * Delete a review
+ * @param {string} reviewId - Review ID
+ * @returns {Promise<Object>} Deletion confirmation
+ */
+export const deleteReview = async (reviewId) => {
+    return apiFetch(`/reviews/${reviewId}`, {
+        method: 'DELETE',
+    });
+};
+
+/**
+ * Get all reviews for a specific movie
+ * @param {string} movieId - Movie ID (internal ID or TMDB ID)
+ * @returns {Promise<Array>} Array of reviews with user details
+ */
+export const getMovieReviews = async (movieId) => {
+    return apiFetch(`/reviews/movie/${movieId}`);
+};
+
+/**
+ * Get all reviews by a specific user
+ * @param {string} userId - User ID
+ * @returns {Promise<Array>} Array of user's reviews
+ */
+export const getUserReviews = async (userId) => {
+    return apiFetch(`/reviews/user/${userId}`);
+};
+
+/**
+ * Get current user's reviews
+ * @returns {Promise<Array>} Array of current user's reviews
+ */
+export const getMyReviews = async () => {
+    return apiFetch('/reviews/my-reviews');
+};
+
 /**
  * Get the current user's friends list
  * @returns {Promise<Array>} Array of friends

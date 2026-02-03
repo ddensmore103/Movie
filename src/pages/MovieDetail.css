@@ -273,6 +273,61 @@
     text-align: center;
 }
 
+/* Reviews Section */
+.reviews-section {
+    margin-top: var(--space-3xl);
+    padding-top: var(--space-3xl);
+    border-top: 2px solid var(--color-border);
+}
+
+.reviews-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--space-xl);
+    gap: var(--space-lg);
+    flex-wrap: wrap;
+}
+
+.reviews-summary {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    margin-top: var(--space-sm);
+    flex-wrap: wrap;
+}
+
+.average-rating {
+    font-size: var(--font-size-lg);
+    font-weight: 700;
+    color: var(--color-text-primary);
+}
+
+.review-count {
+    font-size: var(--font-size-base);
+    color: var(--color-text-secondary);
+}
+
+.reviews-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+.no-reviews {
+    text-align: center;
+    padding: var(--space-3xl);
+    background: var(--color-bg-secondary);
+    border: 1px dashed var(--color-border);
+    border-radius: var(--radius-lg);
+    color: var(--color-text-secondary);
+}
+
+.no-reviews p {
+    margin: 0;
+    font-size: var(--font-size-lg);
+}
+
 /* Loading & Error States */
 .loading-container,
 .error-container {

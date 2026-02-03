@@ -38,6 +38,55 @@ const db = new DynamoDBClient({
     region: process.env.AWS_REGION,
 });
 
+// Middleware to check if user can edit a list (owner or collaborator)
+const canEditList = async (req, res, next) => {
+    try {
+        const { listId } = req.params;
+        const userId = req.user.uid;
+
+        // Get the list
+        const listResult = await db.send(
+            new GetCommand({
+                TableName: "Lists",
+                Key: { listId },
+            })
+        );
+
+        if (!listResult.Item) {
+            return res.status(404).json({ error: "List not found" });
+        }
+
+        const list = listResult.Item;
+
+        // Check if user is owner
+        if (list.ownerId === userId) {
+            req.list = list;
+            req.isOwner = true;
+            return next();
+        }
+
+        // Check if user is a collaborator
+        const collaboratorResult = await db.send(
+            new GetCommand({
+                TableName: "ListCollaborators",
+                Key: { listId, userId },
+            })
+        );
+
+        if (collaboratorResult.Item) {
+            req.list = list;
+            req.isOwner = false;
+            return next();
+        }
+
+        // User is neither owner nor collaborator
+        return res.status(403).json({ error: "You don't have permission to edit this list" });
+    } catch (err) {
+        console.error("canEditList middleware error:", err);
+        res.status(500).json({ error: err.message });
+    }
+};
+
 // Root check
 app.get("/", (req, res) => {
     res.send("Backend running with Firebase Authentication");
@@ -218,6 +267,70 @@ app.post("/lists", authMiddleware, async (req, res) => {
     }
 });
 
+// 🔍 Get lists user is collaborating on - PROTECTED ROUTE
+// IMPORTANT: This must be defined BEFORE /lists/:listId to avoid route conflicts
+app.get("/lists/collaborating", authMiddleware, async (req, res) => {
+    try {
+        const userId = req.user.uid;
+
+        // Query using GSI to find all lists user is collaborating on
+        const result = await db.send(
+            new QueryCommand({
+                TableName: "ListCollaborators",
+                IndexName: "userId-index",
+                KeyConditionExpression: "userId = :userId",
+                ExpressionAttributeValues: {
+                    ":userId": userId,
+                },
+            })
+        );
+
+        const collaborations = result.Items || [];
+
+        // Fetch list details for each collaboration
+        const listsWithMovies = await Promise.all(
+            collaborations.map(async (collab) => {
+                // Get list details
+                const listResult = await db.send(
+                    new GetCommand({
+                        TableName: "Lists",
+                        Key: { listId: collab.listId },
+                    })
+                );
+
+                if (!listResult.Item) return null;
+
+                const list = listResult.Item;
+
+                // Get movies for this list
+                const moviesResult = await db.send(
+                    new QueryCommand({
+                        TableName: "ListMovies",
+                        KeyConditionExpression: "listId = :listId",
+                        ExpressionAttributeValues: {
+                            ":listId": collab.listId,
+                        },
+                    })
+                );
+
+                return {
+                    ...list,
+                    movies: moviesResult.Items || [],
+                    isCollaborating: true,
+                };
+            })
+        );
+
+        // Filter out null values (deleted lists)
+        const validLists = listsWithMovies.filter(list => list !== null);
+
+        res.json(validLists);
+    } catch (err) {
+        console.error("GET COLLABORATING LISTS ERROR:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // 🔍 Get lists for a specific user - PROTECTED ROUTE
 app.get("/lists/user/:userId", authMiddleware, async (req, res) => {
     try {
@@ -277,29 +390,13 @@ app.get("/lists/user/:userId", authMiddleware, async (req, res) => {
     }
 });
 
-// 🔍 Get list by ID with movies - PROTECTED ROUTE
-app.get("/lists/:listId", authMiddleware, async (req, res) => {
+// 🔍 Get list by ID with movies - PROTECTED ROUTE (owner or collaborator)
+app.get("/lists/:listId", authMiddleware, canEditList, async (req, res) => {
     try {
         const { listId } = req.params;
 
-        // Get the list details
-        const listResult = await db.send(
-            new GetCommand({
-                TableName: "Lists",
-                Key: { listId },
-            })
-        );
-
-        if (!listResult.Item) {
-            return res.status(404).json({ error: "List not found" });
-        }
-
-        // Verify the requesting user owns this list
-        if (req.user.uid !== listResult.Item.ownerId) {
-            return res.status(403).json({
-                error: "Forbidden: You can only access your own lists"
-            });
-        }
+        // List is already verified by canEditList middleware
+        const list = req.list;
 
         // Get all movies in this list
         const moviesResult = await db.send(
@@ -312,9 +409,38 @@ app.get("/lists/:listId", authMiddleware, async (req, res) => {
             })
         );
 
+        // Get collaborators for this list
+        const collaboratorsResult = await db.send(
+            new QueryCommand({
+                TableName: "ListCollaborators",
+                KeyConditionExpression: "listId = :listId",
+                ExpressionAttributeValues: {
+                    ":listId": listId,
+                },
+            })
+        );
+
+        // Fetch user details for each collaborator
+        const collaborators = await Promise.all(
+            (collaboratorsResult.Items || []).map(async (collab) => {
+                const userResult = await db.send(
+                    new GetCommand({
+                        TableName: "Users",
+                        Key: { userId: collab.userId },
+                    })
+                );
+                return {
+                    ...collab,
+                    user: userResult.Item || { userId: collab.userId, username: "Unknown" },
+                };
+            })
+        );
+
         res.json({
-            ...listResult.Item,
+            ...list,
             movies: moviesResult.Items || [],
+            collaborators,
+            isOwner: req.isOwner,
         });
     } catch (err) {
         console.error("GET LIST ERROR:", err);
@@ -385,8 +511,8 @@ app.delete("/lists/:listId", authMiddleware, async (req, res) => {
     }
 });
 
-// ➕ Add movie to list - PROTECTED ROUTE
-app.post("/lists/:listId/movies", authMiddleware, async (req, res) => {
+// ➕ Add movie to list - PROTECTED ROUTE (owner or collaborator)
+app.post("/lists/:listId/movies", authMiddleware, canEditList, async (req, res) => {
     try {
         const { listId } = req.params;
         const { tmdbId, title, posterPath, releaseDate, rating } = req.body;
@@ -395,23 +521,8 @@ app.post("/lists/:listId/movies", authMiddleware, async (req, res) => {
             return res.status(400).json({ error: "tmdbId and title are required" });
         }
 
-        // Verify the list exists and user owns it
-        const listResult = await db.send(
-            new GetCommand({
-                TableName: "Lists",
-                Key: { listId },
-            })
-        );
-
-        if (!listResult.Item) {
-            return res.status(404).json({ error: "List not found" });
-        }
-
-        if (req.user.uid !== listResult.Item.ownerId) {
-            return res.status(403).json({
-                error: "Forbidden: You can only add movies to your own lists"
-            });
-        }
+        // List is already verified by canEditList middleware
+        const list = req.list;
 
         // Create the list-movie entry
         const movieId = crypto.randomUUID();
@@ -440,28 +551,12 @@ app.post("/lists/:listId/movies", authMiddleware, async (req, res) => {
     }
 });
 
-// 🗑️ Remove movie from list - PROTECTED ROUTE
-app.delete("/lists/:listId/movies/:movieId", authMiddleware, async (req, res) => {
+// 🗑️ Remove movie from list - PROTECTED ROUTE (owner or collaborator)
+app.delete("/lists/:listId/movies/:movieId", authMiddleware, canEditList, async (req, res) => {
     try {
         const { listId, movieId } = req.params;
 
-        // Verify the list exists and user owns it
-        const listResult = await db.send(
-            new GetCommand({
-                TableName: "Lists",
-                Key: { listId },
-            })
-        );
-
-        if (!listResult.Item) {
-            return res.status(404).json({ error: "List not found" });
-        }
-
-        if (req.user.uid !== listResult.Item.ownerId) {
-            return res.status(403).json({
-                error: "Forbidden: You can only remove movies from your own lists"
-            });
-        }
+        // List is already verified by canEditList middleware
 
         // Delete the movie from the list
         await db.send(
@@ -480,6 +575,167 @@ app.delete("/lists/:listId/movies/:movieId", authMiddleware, async (req, res) =>
         res.status(500).json({ error: err.message });
     }
 });
+
+// ➕ Add collaborator to list - PROTECTED ROUTE (owner only)
+app.post("/lists/:listId/collaborators", authMiddleware, async (req, res) => {
+    try {
+        const { listId } = req.params;
+        const { userId: collaboratorUserId } = req.body;
+        const ownerId = req.user.uid;
+
+        if (!collaboratorUserId) {
+            return res.status(400).json({ error: "userId is required" });
+        }
+
+        // Get the list and verify ownership
+        const listResult = await db.send(
+            new GetCommand({
+                TableName: "Lists",
+                Key: { listId },
+            })
+        );
+
+        if (!listResult.Item) {
+            return res.status(404).json({ error: "List not found" });
+        }
+
+        if (listResult.Item.ownerId !== ownerId) {
+            return res.status(403).json({ error: "Only the list owner can add collaborators" });
+        }
+
+        // Check if user is trying to add themselves
+        if (collaboratorUserId === ownerId) {
+            return res.status(400).json({ error: "You are already the owner of this list" });
+        }
+
+        // Check if already a collaborator
+        const existingCollaborator = await db.send(
+            new GetCommand({
+                TableName: "ListCollaborators",
+                Key: { listId, userId: collaboratorUserId },
+            })
+        );
+
+        if (existingCollaborator.Item) {
+            return res.status(400).json({ error: "User is already a collaborator" });
+        }
+
+        // Verify the user exists
+        const userResult = await db.send(
+            new GetCommand({
+                TableName: "Users",
+                Key: { userId: collaboratorUserId },
+            })
+        );
+
+        if (!userResult.Item) {
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        // Add collaborator
+        const collaborator = {
+            listId,
+            userId: collaboratorUserId,
+            addedBy: ownerId,
+            addedAt: new Date().toISOString(),
+            role: "collaborator",
+        };
+
+        await db.send(
+            new PutCommand({
+                TableName: "ListCollaborators",
+                Item: collaborator,
+            })
+        );
+
+        res.status(201).json({
+            ...collaborator,
+            user: userResult.Item,
+        });
+    } catch (err) {
+        console.error("ADD COLLABORATOR ERROR:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 🗑️ Remove collaborator from list - PROTECTED ROUTE (owner only)
+app.delete("/lists/:listId/collaborators/:userId", authMiddleware, async (req, res) => {
+    try {
+        const { listId, userId: collaboratorUserId } = req.params;
+        const ownerId = req.user.uid;
+
+        // Get the list and verify ownership
+        const listResult = await db.send(
+            new GetCommand({
+                TableName: "Lists",
+                Key: { listId },
+            })
+        );
+
+        if (!listResult.Item) {
+            return res.status(404).json({ error: "List not found" });
+        }
+
+        if (listResult.Item.ownerId !== ownerId) {
+            return res.status(403).json({ error: "Only the list owner can remove collaborators" });
+        }
+
+        // Remove collaborator
+        await db.send(
+            new DeleteCommand({
+                TableName: "ListCollaborators",
+                Key: { listId, userId: collaboratorUserId },
+            })
+        );
+
+        res.json({ message: "Collaborator removed successfully" });
+    } catch (err) {
+        console.error("REMOVE COLLABORATOR ERROR:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 🔍 Get collaborators for a list - PROTECTED ROUTE
+app.get("/lists/:listId/collaborators", authMiddleware, async (req, res) => {
+    try {
+        const { listId } = req.params;
+
+        // Query collaborators
+        const result = await db.send(
+            new QueryCommand({
+                TableName: "ListCollaborators",
+                KeyConditionExpression: "listId = :listId",
+                ExpressionAttributeValues: {
+                    ":listId": listId,
+                },
+            })
+        );
+
+        const collaborators = result.Items || [];
+
+        // Fetch user details for each collaborator
+        const collaboratorsWithDetails = await Promise.all(
+            collaborators.map(async (collab) => {
+                const userResult = await db.send(
+                    new GetCommand({
+                        TableName: "Users",
+                        Key: { userId: collab.userId },
+                    })
+                );
+                return {
+                    ...collab,
+                    user: userResult.Item || { userId: collab.userId, username: "Unknown" },
+                };
+            })
+        );
+
+        res.json(collaboratorsWithDetails);
+    } catch (err) {
+        console.error("GET COLLABORATORS ERROR:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 
 app.get("/debug-routes", (req, res) => {
     res.json({
@@ -772,6 +1028,254 @@ app.get("/friends", authMiddleware, async (req, res) => {
         res.json(validFriends);
     } catch (err) {
         console.error("GET FRIENDS ERROR:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+/* =========================
+   MOVIE REVIEWS
+========================= */
+
+// ➕ Create a new review - PROTECTED ROUTE
+app.post("/reviews", authMiddleware, async (req, res) => {
+    try {
+        const { movieId, tmdbId, rating, reviewText, watchDate, movieTitle, posterPath } = req.body;
+        const userId = req.user.uid;
+
+        if (!movieId || !rating) {
+            return res.status(400).json({ error: "movieId and rating are required" });
+        }
+
+        if (rating < 1 || rating > 5) {
+            return res.status(400).json({ error: "Rating must be between 1 and 5" });
+        }
+
+        // Check if user already has a review for this movie
+        const existingReviewCommand = new QueryCommand({
+            TableName: "Reviews",
+            IndexName: "userId-index",
+            KeyConditionExpression: "userId = :userId",
+            FilterExpression: "movieId = :movieId",
+            ExpressionAttributeValues: {
+                ":userId": userId,
+                ":movieId": movieId,
+            },
+        });
+
+        const existingResult = await db.send(existingReviewCommand);
+        if (existingResult.Items && existingResult.Items.length > 0) {
+            return res.status(400).json({ error: "You already have a review for this movie. Use PUT to update it." });
+        }
+
+        const review = {
+            reviewId: crypto.randomUUID(),
+            userId,
+            movieId,
+            tmdbId: tmdbId || null,
+            movieTitle: movieTitle || null,
+            posterPath: posterPath || null,
+            rating: parseFloat(rating),
+            reviewText: reviewText || null,
+            watchDate: watchDate || null,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+        };
+
+        await db.send(
+            new PutCommand({
+                TableName: "Reviews",
+                Item: review,
+            })
+        );
+
+        res.status(201).json(review);
+    } catch (err) {
+        console.error("CREATE REVIEW ERROR:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 🔄 Update a review - PROTECTED ROUTE (owner only)
+app.put("/reviews/:reviewId", authMiddleware, async (req, res) => {
+    try {
+        const { reviewId } = req.params;
+        const { rating, reviewText, watchDate } = req.body;
+        const userId = req.user.uid;
+
+        // Get the existing review
+        const reviewResult = await db.send(
+            new GetCommand({
+                TableName: "Reviews",
+                Key: { reviewId },
+            })
+        );
+
+        if (!reviewResult.Item) {
+            return res.status(404).json({ error: "Review not found" });
+        }
+
+        // Verify ownership
+        if (reviewResult.Item.userId !== userId) {
+            return res.status(403).json({ error: "You can only edit your own reviews" });
+        }
+
+        // Validate rating if provided
+        if (rating !== undefined && (rating < 1 || rating > 5)) {
+            return res.status(400).json({ error: "Rating must be between 1 and 5" });
+        }
+
+        // Update the review
+        const updatedReview = {
+            ...reviewResult.Item,
+            rating: rating !== undefined ? parseFloat(rating) : reviewResult.Item.rating,
+            reviewText: reviewText !== undefined ? reviewText : reviewResult.Item.reviewText,
+            watchDate: watchDate !== undefined ? watchDate : reviewResult.Item.watchDate,
+            updatedAt: new Date().toISOString(),
+        };
+
+        await db.send(
+            new PutCommand({
+                TableName: "Reviews",
+                Item: updatedReview,
+            })
+        );
+
+        res.json(updatedReview);
+    } catch (err) {
+        console.error("UPDATE REVIEW ERROR:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 🗑️ Delete a review - PROTECTED ROUTE (owner only)
+app.delete("/reviews/:reviewId", authMiddleware, async (req, res) => {
+    try {
+        const { reviewId } = req.params;
+        const userId = req.user.uid;
+
+        // Get the review to verify ownership
+        const reviewResult = await db.send(
+            new GetCommand({
+                TableName: "Reviews",
+                Key: { reviewId },
+            })
+        );
+
+        if (!reviewResult.Item) {
+            return res.status(404).json({ error: "Review not found" });
+        }
+
+        // Verify ownership
+        if (reviewResult.Item.userId !== userId) {
+            return res.status(403).json({ error: "You can only delete your own reviews" });
+        }
+
+        // Delete the review
+        await db.send(
+            new DeleteCommand({
+                TableName: "Reviews",
+                Key: { reviewId },
+            })
+        );
+
+        res.json({ message: "Review deleted successfully" });
+    } catch (err) {
+        console.error("DELETE REVIEW ERROR:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 🔍 Get all reviews for a specific movie
+app.get("/reviews/movie/:movieId", async (req, res) => {
+    try {
+        const { movieId } = req.params;
+
+        const command = new QueryCommand({
+            TableName: "Reviews",
+            IndexName: "movieId-index",
+            KeyConditionExpression: "movieId = :movieId",
+            ExpressionAttributeValues: {
+                ":movieId": movieId,
+            },
+            ScanIndexForward: false, // Most recent first
+        });
+
+        const result = await db.send(command);
+        const reviews = result.Items || [];
+
+        // Fetch user details for each review
+        const reviewsWithUsers = await Promise.all(
+            reviews.map(async (review) => {
+                try {
+                    const userResult = await db.send(
+                        new GetCommand({
+                            TableName: "Users",
+                            Key: { userId: review.userId },
+                        })
+                    );
+                    return {
+                        ...review,
+                        user: userResult.Item || { userId: review.userId, username: "Unknown" },
+                    };
+                } catch (err) {
+                    console.error(`Error fetching user ${review.userId}:`, err);
+                    return {
+                        ...review,
+                        user: { userId: review.userId, username: "Unknown" },
+                    };
+                }
+            })
+        );
+
+        res.json(reviewsWithUsers);
+    } catch (err) {
+        console.error("GET MOVIE REVIEWS ERROR:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 🔍 Get all reviews by a specific user
+app.get("/reviews/user/:userId", async (req, res) => {
+    try {
+        const { userId } = req.params;
+
+        const command = new QueryCommand({
+            TableName: "Reviews",
+            IndexName: "userId-index",
+            KeyConditionExpression: "userId = :userId",
+            ExpressionAttributeValues: {
+                ":userId": userId,
+            },
+            ScanIndexForward: false, // Most recent first
+        });
+
+        const result = await db.send(command);
+        res.json(result.Items || []);
+    } catch (err) {
+        console.error("GET USER REVIEWS ERROR:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 🔍 Get current user's reviews - PROTECTED ROUTE
+app.get("/reviews/my-reviews", authMiddleware, async (req, res) => {
+    try {
+        const userId = req.user.uid;
+
+        const command = new QueryCommand({
+            TableName: "Reviews",
+            IndexName: "userId-index",
+            KeyConditionExpression: "userId = :userId",
+            ExpressionAttributeValues: {
+                ":userId": userId,
+            },
+            ScanIndexForward: false, // Most recent first
+        });
+
+        const result = await db.send(command);
+        res.json(result.Items || []);
+    } catch (err) {
+        console.error("GET MY REVIEWS ERROR:", err);
         res.status(500).json({ error: err.message });
     }
 });

@@ -1,0 +1,211 @@
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+}
+
+.modal-content {
+    background: #1a1a2e;
+    border-radius: 16px;
+    max-width: 600px;
+    width: 100%;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: #fff;
+}
+
+.close-button {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 4px 8px;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.close-button:hover {
+    opacity: 1;
+}
+
+.modal-body {
+    padding: 24px;
+}
+
+.modal-loading,
+.modal-error {
+    text-align: center;
+    padding: 40px;
+    color: #fff;
+}
+
+.modal-error {
+    color: #ff6b6b;
+}
+
+.collaborators-section,
+.add-collaborators-section {
+    margin-bottom: 32px;
+}
+
+.collaborators-section:last-child,
+.add-collaborators-section:last-child {
+    margin-bottom: 0;
+}
+
+.collaborators-section h3,
+.add-collaborators-section h3 {
+    font-size: 1.1rem;
+    color: #fff;
+    margin: 0 0 16px 0;
+}
+
+.collaborators-list,
+.friends-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.collaborator-item,
+.friend-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    transition: all 0.2s;
+}
+
+.collaborator-item:hover,
+.friend-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(102, 126, 234, 0.3);
+}
+
+.collaborator-avatar,
+.friend-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.collaborator-info,
+.friend-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.collaborator-name,
+.friend-name {
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 4px;
+}
+
+.collaborator-email,
+.friend-email {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.6);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.add-button,
+.remove-button {
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+}
+
+.add-button {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+}
+
+.add-button:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.add-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.remove-button {
+    background: rgba(255, 107, 107, 0.1);
+    color: #ff6b6b;
+    border: 1px solid rgba(255, 107, 107, 0.3);
+}
+
+.remove-button:hover {
+    background: rgba(255, 107, 107, 0.2);
+    border-color: rgba(255, 107, 107, 0.5);
+}
+
+.empty-message {
+    text-align: center;
+    padding: 24px;
+    color: rgba(255, 255, 255, 0.5);
+    font-style: italic;
+}
+
+@media (max-width: 768px) {
+    .modal-content {
+        max-height: 90vh;
+    }
+
+    .modal-header,
+    .modal-body {
+        padding: 16px;
+    }
+
+    .collaborator-item,
+    .friend-item {
+        padding: 10px;
+    }
+
+    .collaborator-avatar,
+    .friend-avatar {
+        width: 40px;
+        height: 40px;
+        font-size: 1.25rem;
+    }
+}
