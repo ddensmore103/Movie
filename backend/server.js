@@ -22,7 +22,11 @@ const app = express();
 
 // Enhanced CORS configuration
 app.use(cors({
-    origin: ['http://localhost:5173', 'http://localhost:3000'],
+    origin: [
+        'http://localhost:5173',                        // Local development
+        'http://localhost:3000',                        // Alternative local port
+        'https://movieapp-ten-lovat.vercel.app/'            // ⚠️ REPLACE with your actual Vercel URL
+    ],
     credentials: true
 }));
 
