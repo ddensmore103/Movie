@@ -1284,6 +1284,13 @@ app.get("/reviews/my-reviews", authMiddleware, async (req, res) => {
     }
 });
 
-app.listen(5000, () => {
-    console.log("Server running on port 5000 with Firebase Authentication");
-});
+// For local development
+if (process.env.NODE_ENV !== 'production') {
+    const PORT = process.env.PORT || 5000;
+    app.listen(PORT, () => {
+        console.log(`Server running on port ${PORT} with Firebase Authentication`);
+    });
+}
+
+// Export for Vercel serverless
+module.exports = app;
