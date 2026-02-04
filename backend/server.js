@@ -38,8 +38,30 @@ app.use((req, res, next) => {
     next();
 });
 
+// Validate required environment variables
+const requiredEnvVars = [
+    'AWS_REGION',
+    'AWS_ACCESS_KEY_ID',
+    'AWS_SECRET_ACCESS_KEY',
+    'FIREBASE_PROJECT_ID',
+    'FIREBASE_CLIENT_EMAIL',
+    'FIREBASE_PRIVATE_KEY'
+];
+
+const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
+if (missingEnvVars.length > 0) {
+    console.error('❌ Missing required environment variables:', missingEnvVars);
+    console.error('Available env vars:', Object.keys(process.env).filter(k => k.includes('AWS') || k.includes('FIREBASE')));
+} else {
+    console.log('✅ All required environment variables are present');
+}
+
 const db = new DynamoDBClient({
     region: process.env.AWS_REGION,
+    credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    },
 });
 
 // Middleware to check if user can edit a list (owner or collaborator)
