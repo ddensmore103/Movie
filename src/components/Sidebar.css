@@ -162,52 +162,33 @@
     border-top: 1px solid var(--color-border);
 }
 
-.user-profile {
+.logout-btn {
     display: flex;
     align-items: center;
     gap: var(--space-md);
-    padding: var(--space-md);
-    background: var(--color-bg-tertiary);
+    padding: var(--space-md) var(--space-lg);
+    width: 100%;
+    background: transparent;
+    border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
+    color: var(--color-text-secondary);
+    font-weight: 500;
+    font-size: var(--font-size-base);
     cursor: pointer;
     transition: all var(--transition-fast);
 }
 
-.user-profile:hover {
-    background: var(--color-bg-primary);
-    transform: translateY(-2px);
-}
-
-.user-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: var(--radius-full);
-    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: var(--font-size-xl);
-    flex-shrink: 0;
-}
-
-.user-info {
-    flex: 1;
-    min-width: 0;
-}
-
-.user-name {
-    font-weight: 600;
-    font-size: var(--font-size-sm);
+.logout-btn:hover {
+    background: var(--color-bg-tertiary);
     color: var(--color-text-primary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    border-color: var(--color-border-light);
+    transform: translateX(4px);
 }
 
-.user-stats {
-    font-size: var(--font-size-xs);
-    color: var(--color-text-muted);
+.logout-btn .nav-icon {
+    font-size: var(--font-size-xl);
 }
+
 
 /* Hamburger Button (Always visible) */
 .hamburger-btn {

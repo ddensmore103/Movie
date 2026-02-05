@@ -81,13 +81,15 @@ const Sidebar = () => {
                 </nav>
 
                 <div className="sidebar-footer">
-                    <div className="user-profile">
-                        <div className="user-avatar">👨‍🚀</div>
-                        <div className="user-info">
-                            <div className="user-name">John Doe</div>
-                            <div className="user-stats">42 movies watched</div>
-                        </div>
-                    </div>
+                    <button
+                        className="logout-btn"
+                        onClick={() => {
+                            import('../firebase').then(({ logout }) => logout());
+                        }}
+                    >
+                        <span className="nav-icon">🚪</span>
+                        <span className="nav-label">Logout</span>
+                    </button>
                 </div>
             </aside>
         </>

@@ -13,7 +13,6 @@ import Settings from './pages/Settings';
 import MovieDetail from './pages/MovieDetail';
 import AllActivity from './pages/AllActivity';
 import AllMovies from './pages/AllMovies';
-import { logout } from './firebase';
 import './App.css';
 
 /**
@@ -54,40 +53,6 @@ function AppContent() {
       <div className="app">
         <Sidebar />
         <main className="main-content">
-          {/* User Info Bar */}
-          <div style={{
-            padding: '12px 20px',
-            margin: '20px 20px 0 20px',
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            color: 'white',
-            borderRadius: '8px',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center'
-          }}>
-            <div>
-              <strong>👤 Logged in as:</strong> {currentUser.email}
-              <br />
-              <small style={{ opacity: 0.9 }}>UID: {currentUser.uid}</small>
-            </div>
-            <button
-              onClick={logout}
-              style={{
-                padding: '8px 16px',
-                background: 'rgba(255, 255, 255, 0.2)',
-                border: '1px solid rgba(255, 255, 255, 0.3)',
-                borderRadius: '6px',
-                color: 'white',
-                cursor: 'pointer',
-                fontWeight: '600',
-                transition: 'all 0.2s'
-              }}
-              onMouseOver={(e) => e.target.style.background = 'rgba(255, 255, 255, 0.3)'}
-              onMouseOut={(e) => e.target.style.background = 'rgba(255, 255, 255, 0.2)'}
-            >
-              Logout
-            </button>
-          </div>
 
           {/* Routes */}
           <Routes>
