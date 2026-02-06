@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { FiHome, FiClipboard, FiUsers, FiUser, FiSettings, FiLogOut, FiShield } from 'react-icons/fi';
 import './Sidebar.css';
 
 const Sidebar = () => {
@@ -9,11 +10,11 @@ const Sidebar = () => {
     const navigate = useNavigate();
 
     const navItems = [
-        { path: '/', icon: '🏠', label: 'Home' },
-        { path: '/lists', icon: '📋', label: 'Lists' },
-        { path: '/friends', icon: '👥', label: 'Friends' },
-        { path: '/profile', icon: '👤', label: 'Profile' },
-        { path: '/settings', icon: '⚙️', label: 'Settings' }
+        { path: '/', icon: <FiHome />, label: 'Home' },
+        { path: '/lists', icon: <FiClipboard />, label: 'Lists' },
+        { path: '/friends', icon: <FiUsers />, label: 'Friends' },
+        { path: '/profile', icon: <FiUser />, label: 'Profile' },
+        { path: '/settings', icon: <FiSettings />, label: 'Settings' }
     ];
 
     const toggleSidebar = () => {
@@ -31,7 +32,7 @@ const Sidebar = () => {
     // Add Admin link if user is admin
     const isAdmin = currentUser?.email === 'dldensmore1@gmail.com';
     const displayedNavItems = isAdmin
-        ? [...navItems, { path: '/admin', icon: '👑', label: 'Admin' }]
+        ? [...navItems, { path: '/admin', icon: <FiShield />, label: 'Admin' }]
         : navItems;
 
     return (
@@ -82,11 +83,12 @@ const Sidebar = () => {
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            fontSize: 'var(--font-size-2xl)'
+                            fontSize: 'var(--font-size-2xl)',
+                            color: 'var(--color-text-secondary)'
                         }}
                         aria-label="Logout"
                     >
-                        🚪
+                        <FiLogOut />
                     </button>
                 </div>
             )}
@@ -120,7 +122,7 @@ const Sidebar = () => {
                         className="logout-btn"
                         onClick={handleLogout}
                     >
-                        <span className="nav-icon">🚪</span>
+                        <span className="nav-icon"><FiLogOut /></span>
                         <span className="nav-label">Logout</span>
                     </button>
                 </div>
