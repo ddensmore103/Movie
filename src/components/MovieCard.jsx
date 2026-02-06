@@ -1,7 +1,7 @@
 import { getImageUrl } from '../services/tmdb';
 import './MovieCard.css';
 
-const MovieCard = ({ movie, onClick }) => {
+const MovieCard = ({ movie, onClick, onAddToList }) => {
     const {
         title,
         poster_path,
@@ -11,6 +11,13 @@ const MovieCard = ({ movie, onClick }) => {
 
     const year = release_date ? new Date(release_date).getFullYear() : 'N/A';
     const rating = vote_average ? vote_average.toFixed(1) : 'N/A';
+
+    const handleAddToList = (e) => {
+        e.stopPropagation(); // Prevent card click
+        if (onAddToList) {
+            onAddToList(movie);
+        }
+    };
 
     return (
         <div className="movie-card" onClick={onClick}>
@@ -22,6 +29,12 @@ const MovieCard = ({ movie, onClick }) => {
                 />
                 <div className="movie-overlay">
                     <button className="play-btn">▶</button>
+                    {onAddToList && (
+                        <button className="add-to-list-btn" onClick={handleAddToList}>
+                            <span className="add-icon">+</span>
+                            <span className="add-text">Add to List</span>
+                        </button>
+                    )}
                 </div>
             </div>
             <div className="movie-info">

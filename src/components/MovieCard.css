@@ -41,10 +41,13 @@
             rgba(0, 0, 0, 0.4) 50%,
             transparent 100%);
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: var(--space-md);
     opacity: 0;
     transition: opacity var(--transition-base);
+    padding: var(--space-md);
 }
 
 .movie-card:hover .movie-overlay {
@@ -72,6 +75,39 @@
     box-shadow: var(--shadow-xl);
 }
 
+.add-to-list-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: var(--space-sm) var(--space-md);
+    background: rgba(255, 255, 255, 0.95);
+    border: 2px solid var(--color-primary);
+    border-radius: var(--radius-full);
+    color: var(--color-primary);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    box-shadow: var(--shadow-md);
+}
+
+.add-to-list-btn:hover {
+    background: var(--color-primary);
+    color: white;
+    transform: scale(1.05);
+    box-shadow: var(--shadow-lg);
+}
+
+.add-icon {
+    font-size: var(--font-size-lg);
+    font-weight: 700;
+    line-height: 1;
+}
+
+.add-text {
+    white-space: nowrap;
+}
+
 .movie-info {
     padding: var(--space-md);
 }
@@ -83,6 +119,7 @@
     margin: 0 0 var(--space-sm) 0;
     display: -webkit-box;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
     line-height: 1.4;

@@ -7,7 +7,9 @@ import {
     signInWithPopup,
     GoogleAuthProvider,
     signOut,
-    onAuthStateChanged
+    onAuthStateChanged,
+    sendEmailVerification as firebaseSendEmailVerification,
+    deleteUser
 } from 'firebase/auth';
 
 // Firebase configuration from environment variables
@@ -34,6 +36,7 @@ const googleProvider = new GoogleAuthProvider();
 
 /**
  * Sign up a new user with email and password
+ * Automatically sends email verification
  * @param {string} email - User's email
  * @param {string} password - User's password
  * @returns {Promise<UserCredential>} Firebase user credential
@@ -41,6 +44,8 @@ const googleProvider = new GoogleAuthProvider();
 export const signUpWithEmail = async (email, password) => {
     try {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        // Send verification email immediately after sign up
+        await firebaseSendEmailVerification(userCredential.user);
         return userCredential;
     } catch (error) {
         console.error('Error signing up:', error);
@@ -74,6 +79,36 @@ export const signInWithGoogle = async () => {
         return userCredential;
     } catch (error) {
         console.error('Error signing in with Google:', error);
+        throw error;
+    }
+};
+
+/**
+ * Send email verification to current user
+ * @param {User} user - Firebase user object
+ * @returns {Promise<void>}
+ */
+export const sendEmailVerification = async (user) => {
+    try {
+        await firebaseSendEmailVerification(user);
+    } catch (error) {
+        console.error('Error sending verification email:', error);
+        throw error;
+    }
+};
+
+/**
+ * Delete the current user's account
+ * @returns {Promise<void>}
+ */
+export const deleteAccount = async () => {
+    try {
+        const user = auth.currentUser;
+        if (user) {
+            await deleteUser(user);
+        }
+    } catch (error) {
+        console.error('Error deleting account:', error);
         throw error;
     }
 };

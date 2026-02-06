@@ -1,0 +1,229 @@
+.select-list-modal {
+    max-width: 500px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.select-list-modal .modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+    overflow-y: auto;
+    max-height: 60vh;
+    padding-right: var(--space-sm);
+}
+
+/* Custom scrollbar for modal body */
+.select-list-modal .modal-body::-webkit-scrollbar {
+    width: 8px;
+}
+
+.select-list-modal .modal-body::-webkit-scrollbar-track {
+    background: var(--color-bg-tertiary);
+    border-radius: var(--radius-sm);
+}
+
+.select-list-modal .modal-body::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: var(--radius-sm);
+}
+
+.select-list-modal .modal-body::-webkit-scrollbar-thumb:hover {
+    background: var(--color-primary-light);
+}
+
+.selected-movie-info {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-md);
+    background: var(--color-bg-tertiary);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+}
+
+.movie-emoji {
+    font-size: 1.5rem;
+}
+
+.movie-title-small {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--color-text-primary);
+    flex: 1;
+}
+
+.create-list-btn {
+    width: 100%;
+    padding: var(--space-md);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+}
+
+.lists-container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+.lists-heading {
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.lists-scroll {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.list-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-md);
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.list-item:hover:not(.disabled) {
+    background: var(--color-bg-tertiary);
+    border-color: var(--color-primary);
+    transform: translateX(4px);
+}
+
+.list-item.selected {
+    background: rgba(102, 126, 234, 0.1);
+    border-color: var(--color-primary);
+}
+
+.list-item.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.list-checkbox {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.list-checkbox input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: var(--color-primary);
+}
+
+.list-item-icon {
+    font-size: 2rem;
+    flex-shrink: 0;
+}
+
+.list-item-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.list-item-name {
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    color: var(--color-text-primary);
+}
+
+.list-item-count {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+}
+
+.list-item-loading {
+    font-size: var(--font-size-sm);
+    color: var(--color-primary);
+    font-weight: 500;
+}
+
+.add-selected-btn {
+    width: 100%;
+    margin-top: var(--space-md);
+    padding: var(--space-md);
+    font-weight: 600;
+}
+
+.add-selected-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.modal-success {
+    padding: var(--space-md);
+    background: rgba(72, 187, 120, 0.1);
+    border: 1px solid rgba(72, 187, 120, 0.3);
+    border-radius: var(--radius-md);
+    color: #48bb78;
+    text-align: center;
+    font-weight: 500;
+    animation: slideIn var(--transition-base) ease-out;
+}
+
+.modal-error {
+    padding: var(--space-md);
+    background: rgba(245, 101, 101, 0.1);
+    border: 1px solid rgba(245, 101, 101, 0.3);
+    border-radius: var(--radius-md);
+    color: #f56565;
+    text-align: center;
+    font-weight: 500;
+    animation: slideIn var(--transition-base) ease-out;
+}
+
+.modal-loading {
+    text-align: center;
+    padding: var(--space-2xl);
+    color: var(--color-text-muted);
+}
+
+.modal-empty {
+    text-align: center;
+    padding: var(--space-2xl);
+    color: var(--color-text-muted);
+}
+
+.modal-empty p {
+    margin: var(--space-sm) 0;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 768px) {
+    .select-list-modal {
+        max-width: 90vw;
+        max-height: 90vh;
+    }
+
+    .lists-scroll {
+        max-height: 300px;
+    }
+}

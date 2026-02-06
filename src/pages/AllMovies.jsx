@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MovieCard from '../components/MovieCard';
+import SelectListModal from '../components/SelectListModal';
 import { tmdbAPI, mockMovies } from '../services/tmdb';
 import './AllMovies.css';
 
@@ -9,6 +10,8 @@ const AllMovies = () => {
     const [movies, setMovies] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [page, setPage] = useState(1);
+    const [showSelectListModal, setShowSelectListModal] = useState(false);
+    const [selectedMovie, setSelectedMovie] = useState(null);
 
     useEffect(() => {
         loadMovies();
@@ -39,6 +42,16 @@ const AllMovies = () => {
         navigate(`/movie/${movie.id}`);
     };
 
+    const handleAddToList = (movie) => {
+        setSelectedMovie(movie);
+        setShowSelectListModal(true);
+    };
+
+    const handleListModalClose = () => {
+        setShowSelectListModal(false);
+        setSelectedMovie(null);
+    };
+
     return (
         <div className="all-movies-page">
             <div className="page-header-with-back">
@@ -57,6 +70,7 @@ const AllMovies = () => {
                             key={movie.id}
                             movie={movie}
                             onClick={() => handleMovieClick(movie)}
+                            onAddToList={handleAddToList}
                         />
                     ))}
                 </div>
@@ -81,6 +95,14 @@ const AllMovies = () => {
                     </button>
                 )}
             </div>
+
+            <SelectListModal
+                isOpen={showSelectListModal}
+                onClose={handleListModalClose}
+                movie={selectedMovie}
+                onSuccess={() => console.log('Movie added to list successfully')}
+                allowMultiple={true}
+            />
         </div>
     );
 };

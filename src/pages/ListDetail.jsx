@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getListById, removeMovieFromList } from '../services/api';
+import { getListById, removeMovieFromList, starList, unstarList } from '../services/api';
 import { getImageUrl } from '../services/tmdb';
 import AddMovieToListModal from '../components/AddMovieToListModal';
 import ManageCollaboratorsModal from '../components/ManageCollaboratorsModal';
@@ -79,6 +79,22 @@ const ListDetail = () => {
         loadListDetails();
     };
 
+    const handleToggleStar = async () => {
+        try {
+            if (list.isStarred) {
+                // Prevent unstarring Favorites
+                if (list.name === 'Favorites') return;
+                await unstarList(listId);
+                setList({ ...list, isStarred: false });
+            } else {
+                await starList(listId);
+                setList({ ...list, isStarred: true });
+            }
+        } catch (err) {
+            console.error('Error toggling star:', err);
+        }
+    };
+
     if (loading) {
         return (
             <div className="list-detail-page">
@@ -111,7 +127,27 @@ const ListDetail = () => {
                 </button>
                 <div className="list-detail-title">
                     <div className="title-row">
-                        <h1>{list.name}</h1>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <h1>{list.name}</h1>
+                            {list.isOwner && (
+                                <button
+                                    onClick={handleToggleStar}
+                                    style={{
+                                        background: 'none',
+                                        border: 'none',
+                                        fontSize: '1.5rem',
+                                        cursor: list.name === 'Favorites' ? 'default' : 'pointer',
+                                        opacity: list.name === 'Favorites' ? 1 : 0.8,
+                                        transition: 'transform 0.2s',
+                                        padding: 0
+                                    }}
+                                    title={list.isStarred ? (list.name === 'Favorites' ? 'Favorites are always starred' : 'Unstar list') : 'Star list'}
+                                    disabled={list.name === 'Favorites'}
+                                >
+                                    {list.isStarred ? '⭐' : '☆'}
+                                </button>
+                            )}
+                        </div>
                         <div className="header-buttons">
                             {list.isOwner && (
                                 <button
@@ -128,8 +164,12 @@ const ListDetail = () => {
                     </div>
                     <p className="list-detail-meta">
                         {list.movies?.length || 0} {list.movies?.length === 1 ? 'movie' : 'movies'}
-                        {' • '}
-                        Created {new Date(list.createdAt).toLocaleDateString()}
+                        {list.name !== 'Favorites' && (
+                            <>
+                                {' • '}
+                                Created {new Date(list.createdAt).toLocaleDateString()}
+                            </>
+                        )}
                     </p>
                 </div>
             </div>

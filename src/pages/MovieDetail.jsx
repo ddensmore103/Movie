@@ -2,10 +2,11 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { tmdbAPI, getImageUrl } from '../services/tmdb';
-import { getMovieReviews, createReview, updateReview, deleteReview } from '../services/api';
+import { getMovieReviews, createReview, updateReview, deleteReview, addToFavorites, removeFromFavorites, checkFavoriteStatus } from '../services/api';
 import StarRating from '../components/StarRating';
 import ReviewModal from '../components/ReviewModal';
 import ReviewCard from '../components/ReviewCard';
+import SelectListModal from '../components/SelectListModal';
 import './MovieDetail.css';
 
 const MovieDetail = () => {
@@ -19,11 +20,25 @@ const MovieDetail = () => {
     const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
     const [editingReview, setEditingReview] = useState(null);
     const [isLoadingReviews, setIsLoadingReviews] = useState(false);
+    const [showSelectListModal, setShowSelectListModal] = useState(false);
+    const [isFavorite, setIsFavorite] = useState(false);
 
     useEffect(() => {
         loadMovieDetails();
         loadReviews();
-    }, [id]);
+        if (currentUser) {
+            checkFavorite();
+        }
+    }, [id, currentUser]);
+
+    const checkFavorite = async () => {
+        try {
+            const status = await checkFavoriteStatus(id);
+            setIsFavorite(status);
+        } catch (err) {
+            console.error('Error checking favorite status:', err);
+        }
+    };
 
     const loadMovieDetails = async () => {
         setIsLoading(true);
@@ -81,6 +96,28 @@ const MovieDetail = () => {
     const handleCloseModal = () => {
         setIsReviewModalOpen(false);
         setEditingReview(null);
+    };
+
+    const handleToggleFavorite = async () => {
+        if (!currentUser) return; // Should show login modal or redirect
+
+        try {
+            if (isFavorite) {
+                await removeFromFavorites(id);
+                setIsFavorite(false);
+            } else {
+                await addToFavorites({
+                    tmdbId: id,
+                    title: movie.title,
+                    posterPath: movie.poster_path,
+                    releaseDate: movie.release_date,
+                    rating: movie.vote_average
+                });
+                setIsFavorite(true);
+            }
+        } catch (err) {
+            console.error('Error toggling favorite:', err);
+        }
     };
 
     const userReview = currentUser ? reviews.find(r => r.userId === currentUser.uid) : null;
@@ -220,11 +257,17 @@ const MovieDetail = () => {
                                 >
                                     ▶ Watch Trailer
                                 </a>
-                                <button className="btn btn-secondary">
+                                <button
+                                    className="btn btn-secondary"
+                                    onClick={() => setShowSelectListModal(true)}
+                                >
                                     ➕ Add to List
                                 </button>
-                                <button className="btn btn-secondary">
-                                    ❤️ Favorite
+                                <button
+                                    className={`btn ${isFavorite ? 'btn-danger' : 'btn-secondary'}`}
+                                    onClick={handleToggleFavorite}
+                                >
+                                    {isFavorite ? '❤️ Favorited' : '🤍 Favorite'}
                                 </button>
                             </div>
                         )}
@@ -347,6 +390,15 @@ const MovieDetail = () => {
                     releaseDate: movie.release_date
                 } : null}
                 existingReview={editingReview}
+            />
+
+            {/* Select List Modal */}
+            <SelectListModal
+                isOpen={showSelectListModal}
+                onClose={() => setShowSelectListModal(false)}
+                movie={movie}
+                onSuccess={() => console.log('Movie added to list(s) successfully')}
+                allowMultiple={true}
             />
         </div>
     );

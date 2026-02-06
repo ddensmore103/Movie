@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 import { setAuthToken } from './services/api';
 import Auth from './components/Auth';
 import Sidebar from './components/Sidebar';
@@ -13,6 +14,7 @@ import Settings from './pages/Settings';
 import MovieDetail from './pages/MovieDetail';
 import AllActivity from './pages/AllActivity';
 import AllMovies from './pages/AllMovies';
+import Admin from './pages/Admin';
 import './App.css';
 
 /**
@@ -65,7 +67,9 @@ function AppContent() {
             <Route path="/friends" element={<Friends />} />
             <Route path="/profile/:userId" element={<Profile />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/profile" element={<Profile />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/admin" element={<Admin />} />
           </Routes>
         </main>
       </div>
@@ -74,13 +78,15 @@ function AppContent() {
 }
 
 /**
- * Root App Component - Wraps everything with AuthProvider
+ * Root App Component - Wraps everything with ThemeProvider and AuthProvider
  */
 function App() {
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 

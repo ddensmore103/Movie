@@ -3,7 +3,9 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import SearchBar from '../components/SearchBar';
 import ActivityCard from '../components/ActivityCard';
 import MovieCard from '../components/MovieCard';
-import { tmdbAPI, mockMovies, mockActivity } from '../services/tmdb';
+import SelectListModal from '../components/SelectListModal';
+import { tmdbAPI, mockMovies } from '../services/tmdb';
+import { getActivityFeed } from '../services/api';
 import './Home.css';
 
 const Home = () => {
@@ -15,7 +17,10 @@ const Home = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [isSearching, setIsSearching] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [activityLoading, setActivityLoading] = useState(true);
     const [resetTrigger, setResetTrigger] = useState(0);
+    const [showSelectListModal, setShowSelectListModal] = useState(false);
+    const [selectedMovie, setSelectedMovie] = useState(null);
 
     useEffect(() => {
         // Load initial data
@@ -40,8 +45,18 @@ const Home = () => {
             setRecommendedMovies(mockMovies);
         }
 
-        // Activity feed uses mock data (requires backend)
-        setRecentActivity(mockActivity);
+        // Fetch real activity feed
+        try {
+            setActivityLoading(true);
+            const activityData = await getActivityFeed();
+            setRecentActivity(activityData);
+        } catch (error) {
+            console.error('Error loading activity feed:', error);
+            setRecentActivity([]);
+        } finally {
+            setActivityLoading(false);
+        }
+
         setIsLoading(false);
     };
 
@@ -77,6 +92,22 @@ const Home = () => {
         navigate(`/movie/${movie.id}`);
     };
 
+    const handleActivityClick = (activity) => {
+        if (activity.tmdbId) {
+            navigate(`/movie/${activity.tmdbId}`);
+        }
+    };
+
+    const handleAddToList = (movie) => {
+        setSelectedMovie(movie);
+        setShowSelectListModal(true);
+    };
+
+    const handleListModalClose = () => {
+        setShowSelectListModal(false);
+        setSelectedMovie(null);
+    };
+
     const displayedMovies = isSearching ? searchResults : recommendedMovies;
     const sectionTitle = isSearching
         ? `Search Results for "${searchQuery}"`
@@ -99,11 +130,34 @@ const Home = () => {
                                 View All →
                             </button>
                         </div>
-                        <div className="activity-feed">
-                            {recentActivity.map((activity) => (
-                                <ActivityCard key={activity.id} activity={activity} />
-                            ))}
-                        </div>
+                        {activityLoading ? (
+                            <div className="activity-feed">
+                                <p style={{ textAlign: 'center', padding: '40px', color: 'var(--color-secondary)' }}>
+                                    Loading activity...
+                                </p>
+                            </div>
+                        ) : recentActivity.length > 0 ? (
+                            <div className="activity-feed">
+                                {recentActivity.map((activity) => (
+                                    <ActivityCard key={activity.reviewId || activity.id} activity={activity} />
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="activity-feed" style={{
+                                display: 'flex',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                minHeight: '200px'
+                            }}>
+                                <p style={{
+                                    textAlign: 'center',
+                                    color: 'var(--color-secondary)',
+                                    fontSize: '1.2rem'
+                                }}>
+                                    No recent activity, go watch some movies! 🎬
+                                </p>
+                            </div>
+                        )}
                     </section>
                 )}
 
@@ -135,6 +189,7 @@ const Home = () => {
                                     key={movie.id}
                                     movie={movie}
                                     onClick={() => handleMovieClick(movie)}
+                                    onAddToList={handleAddToList}
                                 />
                             ))}
                         </div>
@@ -148,6 +203,14 @@ const Home = () => {
                     )}
                 </section>
             </div>
+
+            <SelectListModal
+                isOpen={showSelectListModal}
+                onClose={handleListModalClose}
+                movie={selectedMovie}
+                onSuccess={() => console.log('Movie added to list successfully')}
+                allowMultiple={true}
+            />
         </div>
     );
 };

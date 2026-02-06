@@ -63,12 +63,73 @@
     margin-bottom: 20px;
 }
 
-.form-group label {
-    display: block;
-    font-size: 14px;
-    font-weight: 600;
-    color: #333;
+.form-label {
+    display: block !important;
+    font-size: 15px !important;
+    font-weight: 700 !important;
+    color: #000000 !important;
+    background: transparent !important;
     margin-bottom: 8px;
+    letter-spacing: 0.3px;
+    text-align: left;
+    padding: 0;
+}
+
+.auth-form .form-group label {
+    display: block !important;
+    font-size: 15px !important;
+    font-weight: 700 !important;
+    color: #000000 !important;
+    background: transparent !important;
+    margin-bottom: 8px;
+    letter-spacing: 0.3px;
+    text-align: left;
+    padding: 0;
+}
+
+.password-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.password-input-wrapper input {
+    width: 100%;
+    padding: 12px 50px 12px 16px;
+    font-size: 16px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    transition: all 0.2s;
+    box-sizing: border-box;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 12px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 20px;
+    padding: 4px 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.password-toggle:hover:not(:disabled) {
+    transform: scale(1.1);
+}
+
+.password-toggle:active:not(:disabled) {
+    transform: scale(0.95);
+}
+
+.password-toggle:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 .form-group input {
@@ -189,4 +250,63 @@
 .toggle-button:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+}
+
+/* Verification Screen Styles */
+.verification-message {
+    background: #f8f9ff;
+    border: 2px solid #e0e7ff;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.verification-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+}
+
+.verification-text {
+    font-size: 15px;
+    color: #666;
+    margin: 8px 0;
+}
+
+.verification-email {
+    font-size: 16px;
+    font-weight: 600;
+    color: #667eea;
+    margin: 12px 0;
+    word-break: break-word;
+}
+
+.verification-instructions {
+    font-size: 14px;
+    color: #888;
+    margin: 12px 0 0 0;
+    line-height: 1.5;
+}
+
+.auth-success {
+    background: #e8f5e9;
+    color: #2e7d32;
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    border: 1px solid #a5d6a7;
+}
+
+.auth-button.secondary {
+    background: white;
+    color: #667eea;
+    border: 2px solid #667eea;
+    margin-top: 12px;
+}
+
+.auth-button.secondary:hover:not(:disabled) {
+    background: #f8f9ff;
+    border-color: #764ba2;
+    color: #764ba2;
 }

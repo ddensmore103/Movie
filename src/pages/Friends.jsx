@@ -103,22 +103,22 @@ const Friends = () => {
         <div className="friends-page">
             <div className="page-header">
                 <h1 className="page-title">Friends</h1>
+                <div className="header-search">
+                    <UserSearchBar
+                        onUserSelect={handleUserSelect}
+                        excludeUserIds={excludeUserIds}
+                    />
+                </div>
+                <div className="header-placeholder"></div>
             </div>
 
             {error && (
                 <div className="error-message">{error}</div>
             )}
 
-            {/* User Search Section */}
-            <section className="search-section">
-                <h2 className="section-title">Find Friends</h2>
-                <UserSearchBar
-                    onUserSelect={handleUserSelect}
-                    excludeUserIds={excludeUserIds}
-                />
-
-                {/* Search Results */}
-                {searchResults.length > 0 && (
+            {/* Search Results */}
+            {searchResults.length > 0 && (
+                <section className="search-section">
                     <div className="search-results-list">
                         {searchResults.map((user) => {
                             const alreadySent = sentRequests.has(user.userId);
@@ -140,8 +140,8 @@ const Friends = () => {
                             );
                         })}
                     </div>
-                )}
-            </section>
+                </section>
+            )}
 
             {/* Pending Requests Section */}
             {pendingRequests.length > 0 && (

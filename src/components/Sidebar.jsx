@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import './Sidebar.css';
 
 const Sidebar = () => {
     const [isOpen, setIsOpen] = useState(false);
     const location = useLocation();
+    const navigate = useNavigate();
 
     const navItems = [
         { path: '/', icon: '🏠', label: 'Home' },
@@ -17,6 +19,20 @@ const Sidebar = () => {
     const toggleSidebar = () => {
         setIsOpen(!isOpen);
     };
+
+    const handleLogout = async () => {
+        const { logout } = await import('../firebase');
+        await logout();
+        navigate('/'); // Redirect to home page
+    };
+
+    const { currentUser } = useAuth(); // Create this context hook
+
+    // Add Admin link if user is admin
+    const isAdmin = currentUser?.email === 'dldensmore1@gmail.com';
+    const displayedNavItems = isAdmin
+        ? [...navItems, { path: '/admin', icon: '👑', label: 'Admin' }]
+        : navItems;
 
     return (
         <>
@@ -42,7 +58,7 @@ const Sidebar = () => {
             {/* Mini Sidebar (Icon Only - Always Visible) */}
             {!isOpen && (
                 <div className="mini-sidebar">
-                    {navItems.map((item) => (
+                    {displayedNavItems.map((item) => (
                         <Link
                             key={item.path}
                             to={item.path}
@@ -66,7 +82,7 @@ const Sidebar = () => {
                 </div>
 
                 <nav className="sidebar-nav">
-                    {navItems.map((item) => (
+                    {displayedNavItems.map((item) => (
                         <Link
                             key={item.path}
                             to={item.path}
@@ -83,9 +99,7 @@ const Sidebar = () => {
                 <div className="sidebar-footer">
                     <button
                         className="logout-btn"
-                        onClick={() => {
-                            import('../firebase').then(({ logout }) => logout());
-                        }}
+                        onClick={handleLogout}
                     >
                         <span className="nav-icon">🚪</span>
                         <span className="nav-label">Logout</span>

@@ -68,6 +68,17 @@ export const getUser = async (userId) => {
 };
 
 /**
+ * Delete user data from backend
+ * @param {string} userId - User ID (Firebase UID)
+ * @returns {Promise<Object>} Deletion confirmation
+ */
+export const deleteUserData = async (userId) => {
+    return apiFetch(`/users/${userId}`, {
+        method: 'DELETE',
+    });
+};
+
+/**
  * Create a new user (legacy - may not be needed with auto-creation)
  * @param {Object} userData - User data (username, email)
  * @returns {Promise<Object>} Created user
@@ -76,6 +87,27 @@ export const createUser = async (userData) => {
     return apiFetch('/users', {
         method: 'POST',
         body: JSON.stringify(userData),
+    });
+};
+
+// ==================== ADMIN ENDPOINTS ====================
+
+/**
+ * Get all users (Admin only)
+ * @returns {Promise<Array>} List of all users
+ */
+export const getAllUsers = async () => {
+    return apiFetch('/admin/users');
+};
+
+/**
+ * Delete a user by Admin (deletes DB + Firebase)
+ * @param {string} userId - User ID to delete
+ * @returns {Promise<Object>} Success message
+ */
+export const adminDeleteUser = async (userId) => {
+    return apiFetch(`/admin/users/${userId}`, {
+        method: 'DELETE',
     });
 };
 
@@ -99,7 +131,10 @@ export const createList = async (listData) => {
  * @returns {Promise<Array>} User's lists
  */
 export const getUserLists = async (userId) => {
-    return apiFetch(`/lists/user/${userId}`);
+    console.log('getUserLists called with userId:', userId);
+    const result = await apiFetch(`/lists/user/${userId}`);
+    console.log('getUserLists result:', result);
+    return result;
 };
 
 /**
@@ -321,7 +356,10 @@ export const getMovieReviews = async (movieId) => {
  * @returns {Promise<Array>} Array of user's reviews
  */
 export const getUserReviews = async (userId) => {
-    return apiFetch(`/reviews/user/${userId}`);
+    console.log('getUserReviews called with userId:', userId);
+    const result = await apiFetch(`/reviews/user/${userId}`);
+    console.log('getUserReviews result:', result);
+    return result;
 };
 
 /**
@@ -337,7 +375,73 @@ export const getMyReviews = async () => {
  * @returns {Promise<Array>} Array of friends
  */
 export const getFriends = async () => {
-    return apiFetch('/friends');
+    console.log('getFriends called');
+    const result = await apiFetch('/friends');
+    console.log('getFriends result:', result);
+    return result;
+};
+
+/**
+ * Get activity feed (reviews from user and friends)
+ * @returns {Promise<Array>} Array of reviews with user details
+ */
+export const getActivityFeed = async () => {
+    return apiFetch('/activity/feed');
+};
+
+/**
+ * Add movie to favorites
+ * @param {Object} movieData - Movie data (tmdbId, title, posterPath, releaseDate, rating)
+ * @returns {Promise<Object>} Added favorite
+ */
+export const addToFavorites = async (movieData) => {
+    return apiFetch('/favorites', {
+        method: 'POST',
+        body: JSON.stringify(movieData),
+    });
+};
+
+/**
+ * Remove movie from favorites
+ * @param {string|number} tmdbId - TMDB ID of the movie
+ * @returns {Promise<Object>} Success message
+ */
+export const removeFromFavorites = async (tmdbId) => {
+    return apiFetch(`/favorites/${tmdbId}`, {
+        method: 'DELETE',
+    });
+};
+
+/**
+ * Check if a movie is in favorites
+ * @param {string|number} tmdbId - TMDB ID
+ * @returns {Promise<boolean>} True if favorite, false otherwise
+ */
+export const checkFavoriteStatus = async (tmdbId) => {
+    const result = await apiFetch(`/favorites/check/${tmdbId}`);
+    return result.isFavorite;
+};
+
+/**
+ * Star a list
+ * @param {string} listId - List ID
+ * @returns {Promise<Object>} Success message
+ */
+export const starList = async (listId) => {
+    return apiFetch(`/lists/${listId}/star`, {
+        method: 'POST',
+    });
+};
+
+/**
+ * Unstar a list
+ * @param {string} listId - List ID
+ * @returns {Promise<Object>} Success message
+ */
+export const unstarList = async (listId) => {
+    return apiFetch(`/lists/${listId}/star`, {
+        method: 'DELETE',
+    });
 };
 
 export default {
@@ -351,4 +455,9 @@ export default {
     addMovieToList,
     removeMovieFromList,
     testDatabase,
+    addToFavorites,
+    removeFromFavorites,
+    checkFavoriteStatus,
+    starList,
+    unstarList,
 };

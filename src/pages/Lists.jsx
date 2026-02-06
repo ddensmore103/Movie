@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { getUserLists, createList, deleteList, getCollaboratingLists } from '../services/api';
+import { getUserLists, createList, deleteList, getCollaboratingLists, starList, unstarList } from '../services/api';
 import { getImageUrl } from '../services/tmdb';
 import CreateListModal from '../components/CreateListModal';
 import AddMovieToListModal from '../components/AddMovieToListModal';
@@ -46,7 +46,28 @@ const Lists = () => {
                 getUserLists(currentUser.uid),
                 getCollaboratingLists()
             ]);
-            setUserLists(ownedLists);
+
+            // Sort: Favorites first, then StarredByDate (oldest first), then CreatedByDate (oldest first)
+            const sortedLists = ownedLists.sort((a, b) => {
+                // 1. Favorites always first
+                if (a.name === 'Favorites') return -1;
+                if (b.name === 'Favorites') return 1;
+
+                // 2. Starred vs Unstarred
+                if (a.isStarred !== b.isStarred) {
+                    return a.isStarred ? -1 : 1;
+                }
+
+                // 3. Both Starred: Sort by starredAt ascending (oldest first)
+                if (a.isStarred) {
+                    return new Date(a.starredAt || a.createdAt) - new Date(b.starredAt || b.createdAt);
+                }
+
+                // 4. Both Unstarred: Sort by createdAt ascending (oldest first)
+                return new Date(a.createdAt) - new Date(b.createdAt);
+            });
+
+            setUserLists(sortedLists);
             setCollaboratingLists(collabLists);
         } catch (err) {
             console.error('Error loading lists:', err);
@@ -74,6 +95,36 @@ const Lists = () => {
         e.stopPropagation();
         setListToDelete(list);
         setIsConfirmModalOpen(true);
+    };
+
+    const handleToggleStar = async (list, e) => {
+        e.stopPropagation();
+        if (list.name === 'Favorites') return;
+
+        try {
+            if (list.isStarred) {
+                await unstarList(list.listId);
+                // Update local state
+                setUserLists(prev => prev.map(l =>
+                    l.listId === list.listId ? { ...l, isStarred: false, starredAt: null } : l
+                ));
+            } else {
+                await starList(list.listId);
+                // Update local state
+                setUserLists(prev => prev.map(l =>
+                    l.listId === list.listId ? { ...l, isStarred: true, starredAt: new Date().toISOString() } : l
+                ));
+            }
+            // Re-sort handled by subsequent render if we mutate, but simpler to just reload or let effect handle specific sort if we want instant jump.
+            // For now, let's just update property. The sort might not auto-trigger unless we shallow copy.
+            // Actually, we are mapping to new array, so state update will trigger re-render.
+            // However, `userLists` is sorted in `loadUserLists`. We might want to re-sort here too.
+            // Let's rely on standard state update re-render, but we need to re-apply sort logic if we want them to jump instantly.
+            // For simplicity in this step, I'll just update state.
+            loadUserLists(); // Reload to get proper sort
+        } catch (err) {
+            console.error('Error toggling star:', err);
+        }
     };
 
     const handleConfirmDelete = async () => {
@@ -135,10 +186,7 @@ const Lists = () => {
                                     onClick={() => handleListClick(list.listId)}
                                 >
                                     <div className="list-card-header">
-                                        {(!list.movies || list.movies.length === 0) && (
-                                            <div className="list-emoji">📋</div>
-                                        )}
-                                        <div className="list-actions">
+                                        <div className="list-actions" style={{ width: '100%' }}>
                                             <button
                                                 className="list-action-btn add-btn"
                                                 onClick={(e) => handleOpenAddMovieModal(list, e)}
@@ -146,17 +194,40 @@ const Lists = () => {
                                             >
                                                 ➕
                                             </button>
+
+                                            {list.name !== 'Favorites' && (
+                                                <button
+                                                    className="list-action-btn star-btn"
+                                                    onClick={(e) => handleToggleStar(list, e)}
+                                                    title={list.isStarred ? "Unstar list" : "Star list"}
+                                                    style={{
+                                                        marginLeft: '4px',
+                                                        color: list.isStarred ? 'gold' : 'white', // Gold for starred, White for unstarred
+                                                        fontSize: '1.2rem',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        paddingBottom: '2px'
+                                                    }}
+                                                >
+                                                    {list.isStarred ? '⭐' : '☆'}
+                                                </button>
+                                            )}
+
                                             <button
                                                 className="list-action-btn delete-btn"
                                                 onClick={(e) => handleDeleteListClick(list, e)}
                                                 disabled={deletingListId === list.listId}
                                                 title="Delete list"
+                                                style={{ marginLeft: 'auto' }}
                                             >
                                                 {deletingListId === list.listId ? '⏳' : '🗑️'}
                                             </button>
                                         </div>
                                     </div>
-                                    <h3 className="list-name">{list.name}</h3>
+                                    <h3 className="list-name">
+                                        {list.name}
+                                    </h3>
                                     <p className="list-count">
                                         {list.movies?.length || 0} {list.movies?.length === 1 ? 'movie' : 'movies'}
                                     </p>
@@ -175,9 +246,11 @@ const Lists = () => {
                                         </div>
                                     )}
 
-                                    <p style={{ fontSize: '0.8rem', opacity: 0.6, marginTop: '8px' }}>
-                                        Created {new Date(list.createdAt).toLocaleDateString()}
-                                    </p>
+                                    {list.name !== 'Favorites' && (
+                                        <p style={{ fontSize: '0.8rem', opacity: 0.6, marginTop: '8px' }}>
+                                            Created {new Date(list.createdAt).toLocaleDateString()}
+                                        </p>
+                                    )}
                                 </div>
                             ))}
                         </div>
@@ -200,16 +273,30 @@ const Lists = () => {
                                     onClick={() => handleListClick(list.listId)}
                                 >
                                     <div className="list-card-header">
-                                        {(!list.movies || list.movies.length === 0) && (
-                                            <div className="list-emoji">📋</div>
-                                        )}
-                                        <div className="list-actions">
+                                        <div className="list-actions" style={{ width: '100%' }}>
                                             <button
                                                 className="list-action-btn add-btn"
                                                 onClick={(e) => handleOpenAddMovieModal(list, e)}
                                                 title="Add movies"
                                             >
                                                 ➕
+                                            </button>
+
+                                            <button
+                                                className="list-action-btn star-btn"
+                                                onClick={(e) => handleToggleStar(list, e)}
+                                                title={list.isStarred ? "Unstar list" : "Star list"}
+                                                style={{
+                                                    marginLeft: '4px',
+                                                    color: list.isStarred ? 'gold' : 'white', // Gold for starred, White for unstarred
+                                                    fontSize: '1.2rem',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    paddingBottom: '2px'
+                                                }}
+                                            >
+                                                {list.isStarred ? '⭐' : '☆'}
                                             </button>
                                         </div>
                                     </div>
