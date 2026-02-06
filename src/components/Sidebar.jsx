@@ -98,7 +98,7 @@ const Sidebar = () => {
                 <div className="sidebar-header">
                     <h1 className="sidebar-logo">
                         <span className="logo-icon">🎬</span>
-                        <span className="logo-text">MovieTrack</span>
+                        <span className="logo-text">Cinemarkd</span>
                     </h1>
                 </div>
 

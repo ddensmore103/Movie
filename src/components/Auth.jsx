@@ -159,7 +159,7 @@ const Auth = () => {
     return (
         <div className="auth-container">
             <div className="auth-card">
-                <h1 className="auth-title">🎬 Movie App</h1>
+                <h1 className="auth-title">Cinemarkd</h1>
 
                 {awaitingVerification ? (
                     <>
