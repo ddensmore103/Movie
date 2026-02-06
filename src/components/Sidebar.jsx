@@ -69,6 +69,25 @@ const Sidebar = () => {
                             {item.icon}
                         </Link>
                     ))}
+                    <button
+                        className="mini-nav-item"
+                        onClick={handleLogout}
+                        data-label="Logout"
+                        style={{
+                            marginTop: 'auto',
+                            background: 'transparent',
+                            border: 'none',
+                            width: '50px',
+                            height: '50px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: 'var(--font-size-2xl)'
+                        }}
+                        aria-label="Logout"
+                    >
+                        🚪
+                    </button>
                 </div>
             )}
 

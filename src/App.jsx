@@ -15,6 +15,7 @@ import MovieDetail from './pages/MovieDetail';
 import AllActivity from './pages/AllActivity';
 import AllMovies from './pages/AllMovies';
 import Admin from './pages/Admin';
+import EditProfile from './pages/EditProfile';
 import './App.css';
 
 /**
@@ -66,7 +67,7 @@ function AppContent() {
             <Route path="/lists/:listId" element={<ListDetail />} />
             <Route path="/friends" element={<Friends />} />
             <Route path="/profile/:userId" element={<Profile />} />
-            <Route path="/profile" element={<Profile />} />
+            <Route path="/profile/edit" element={<EditProfile />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/admin" element={<Admin />} />

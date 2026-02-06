@@ -435,6 +435,57 @@ app.get("/users/:userId", async (req, res) => {
     }
 });
 
+// ✏️ Update user profile
+app.put("/users/:userId", authMiddleware, async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const { username, bio, photoURL, email } = req.body;
+
+        // Verify the requesting user is updating their own account
+        if (req.user.uid !== userId) {
+            return res.status(403).json({
+                error: "Forbidden: You can only update your own account"
+            });
+        }
+
+        // Build update expression
+        let updateExpression = "set updatedAt = :now";
+        const expressionAttributeValues = {
+            ":now": new Date().toISOString()
+        };
+        const expressionAttributeNames = {};
+
+        if (username) {
+            updateExpression += ", username = :username";
+            expressionAttributeValues[":username"] = username;
+        }
+        if (bio !== undefined) {
+            updateExpression += ", bio = :bio";
+            expressionAttributeValues[":bio"] = bio;
+        }
+        if (photoURL !== undefined) {
+            updateExpression += ", photoURL = :photoURL";
+            expressionAttributeValues[":photoURL"] = photoURL;
+        }
+        if (email) {
+            updateExpression += ", email = :email";
+            expressionAttributeValues[":email"] = email;
+        }
+
+        await db.send(new UpdateCommand({
+            TableName: "Users",
+            Key: { userId },
+            UpdateExpression: updateExpression,
+            ExpressionAttributeValues: expressionAttributeValues,
+        }));
+
+        res.json({ message: "User updated successfully" });
+    } catch (err) {
+        console.error("UPDATE USER ERROR:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // 🗑️ Delete user - PROTECTED ROUTE
 app.delete("/users/:userId", authMiddleware, async (req, res) => {
     try {
@@ -1274,6 +1325,58 @@ app.get("/friend-requests/pending", authMiddleware, async (req, res) => {
         res.json(requestsWithUserDetails);
     } catch (err) {
         console.error("GET PENDING REQUESTS ERROR:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 🔍 Get sent friend requests - PROTECTED ROUTE
+app.get("/friend-requests/sent", authMiddleware, async (req, res) => {
+    try {
+        // Since we might not have an index on fromUserId, we'll use Scan with Filter
+        // In production with high volume, this should use a GSI
+        const command = new ScanCommand({
+            TableName: "FriendRequests",
+            FilterExpression: "fromUserId = :fromUserId AND #status = :status",
+            ExpressionAttributeNames: {
+                "#status": "status"
+            },
+            ExpressionAttributeValues: {
+                ":fromUserId": req.user.uid,
+                ":status": "PENDING",
+            },
+        });
+
+        const result = await db.send(command);
+        const requests = result.Items || [];
+
+        // Fetch user details for each request (the 'to' user)
+        const requestsWithUserDetails = await Promise.all(
+            requests.map(async (request) => {
+                try {
+                    const userResult = await db.send(
+                        new GetCommand({
+                            TableName: "Users",
+                            Key: { userId: request.toUserId },
+                        })
+                    );
+
+                    return {
+                        ...request,
+                        toUser: userResult.Item || null,
+                    };
+                } catch (err) {
+                    console.error(`Error fetching user ${request.toUserId}:`, err);
+                    return {
+                        ...request,
+                        toUser: null,
+                    };
+                }
+            })
+        );
+
+        res.json(requestsWithUserDetails);
+    } catch (err) {
+        console.error("GET SENT REQUESTS ERROR:", err);
         res.status(500).json({ error: err.message });
     }
 });

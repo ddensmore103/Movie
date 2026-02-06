@@ -68,6 +68,19 @@ export const getUser = async (userId) => {
 };
 
 /**
+ * Update user profile data
+ * @param {string} userId - User ID
+ * @param {Object} userData - Data to update (username, bio, photoURL)
+ * @returns {Promise<Object>} Success message
+ */
+export const updateUserProfile = async (userId, userData) => {
+    return apiFetch(`/users/${userId}`, {
+        method: 'PUT',
+        body: JSON.stringify(userData),
+    });
+};
+
+/**
  * Delete user data from backend
  * @param {string} userId - User ID (Firebase UID)
  * @returns {Promise<Object>} Deletion confirmation
@@ -231,6 +244,14 @@ export const sendFriendRequest = async (toUserId) => {
  */
 export const getPendingFriendRequests = async () => {
     return apiFetch('/friend-requests/pending');
+};
+
+/**
+ * Get pending sent friend requests
+ * @returns {Promise<Array>} Array of sent requests with user details
+ */
+export const getSentFriendRequests = async () => {
+    return apiFetch('/friend-requests/sent');
 };
 
 /**

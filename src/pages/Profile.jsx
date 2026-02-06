@@ -19,19 +19,22 @@ const Profile = () => {
 
     // Determine if viewing own profile or another user's profile
     const isOwnProfile = !userId || userId === currentUser?.uid;
-    const displayUser = isOwnProfile ? currentUser : user;
+    // Prefer fetched 'user' data as it contains extra fields like bio
+    const displayUser = user || (isOwnProfile ? currentUser : null);
 
-    // Fetch user data if viewing another user's profile
+    // Fetch user data
     useEffect(() => {
         const fetchUserData = async () => {
-            if (isOwnProfile) {
+            const targetId = isOwnProfile ? currentUser?.uid : userId;
+
+            if (!targetId) {
                 setLoading(false);
                 return;
             }
 
             try {
                 setLoading(true);
-                const userData = await getUser(userId);
+                const userData = await getUser(targetId);
                 setUser(userData);
             } catch (err) {
                 console.error('Error fetching user:', err);
@@ -160,14 +163,19 @@ const Profile = () => {
             <div className="profile-header">
                 <div className="profile-avatar-large">{userAvatar}</div>
                 <div className="profile-info">
-                    <h1 className="profile-name">{displayName}</h1>
-                    <p className="profile-bio">Movie enthusiast | Sci-fi lover | Always looking for hidden gems</p>
-                    <p style={{ fontSize: '0.9rem', opacity: 0.7, marginTop: '8px' }}>
+                    <h1 className="profile-name" style={{ marginBottom: '0px' }}>{displayName}</h1>
+                    <p style={{ fontSize: '0.9rem', opacity: 0.7, marginTop: '2px', marginBottom: '0' }}>
                         {displayUser?.email}
                     </p>
+                    {displayUser?.bio && <p className="profile-bio" style={{ margin: '16px 0' }}>{displayUser.bio}</p>}
                     {isOwnProfile && (
                         <div className="profile-actions">
-                            <button className="btn btn-primary">Edit Profile</button>
+                            <button
+                                className="btn btn-primary"
+                                onClick={() => navigate('/profile/edit')}
+                            >
+                                Edit Profile
+                            </button>
                         </div>
                     )}
                 </div>

@@ -5,6 +5,7 @@ import UserSearchBar from '../components/UserSearchBar';
 import {
     sendFriendRequest,
     getPendingFriendRequests,
+    getSentFriendRequests,
     acceptFriendRequest,
     rejectFriendRequest,
     getFriends
@@ -16,6 +17,7 @@ const Friends = () => {
     const { currentUser } = useContext(AuthContext);
     const [friends, setFriends] = useState([]);
     const [pendingRequests, setPendingRequests] = useState([]);
+    const [sentPendingRequests, setSentPendingRequests] = useState([]);
     const [searchResults, setSearchResults] = useState([]);
     const [sentRequests, setSentRequests] = useState(new Set());
     const [loading, setLoading] = useState(true);
@@ -32,12 +34,14 @@ const Friends = () => {
         setLoading(true);
         setError(null);
         try {
-            const [friendsList, requests] = await Promise.all([
+            const [friendsList, requests, sentReqs] = await Promise.all([
                 getFriends(),
-                getPendingFriendRequests()
+                getPendingFriendRequests(),
+                getSentFriendRequests()
             ]);
             setFriends(friendsList);
             setPendingRequests(requests);
+            setSentPendingRequests(sentReqs);
         } catch (err) {
             console.error('Error loading friends data:', err);
             setError('Failed to load friends. Please try again.');
@@ -143,42 +147,7 @@ const Friends = () => {
                 </section>
             )}
 
-            {/* Pending Requests Section */}
-            {pendingRequests.length > 0 && (
-                <section className="friends-section pending-section">
-                    <h2 className="section-title">
-                        Pending Requests
-                        <span className="notification-badge">{pendingRequests.length}</span>
-                    </h2>
-                    <div className="pending-requests-list">
-                        {pendingRequests.map((request) => (
-                            <div key={request.requestId} className="pending-request-card">
-                                <div className="user-avatar">👤</div>
-                                <div className="user-info">
-                                    <h3 className="user-name">
-                                        {request.fromUser?.username || 'Unknown User'}
-                                    </h3>
-                                    <p className="user-email">{request.fromUser?.email}</p>
-                                </div>
-                                <div className="request-actions">
-                                    <button
-                                        className="btn btn-primary"
-                                        onClick={() => handleAcceptRequest(request.requestId)}
-                                    >
-                                        ✓ Accept
-                                    </button>
-                                    <button
-                                        className="btn btn-secondary"
-                                        onClick={() => handleRejectRequest(request.requestId)}
-                                    >
-                                        ✕ Reject
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </section>
-            )}
+
 
             {/* Friends List Section */}
             <section className="friends-section">
@@ -204,6 +173,71 @@ const Friends = () => {
                     </div>
                 )}
             </section>
+
+            {/* Pending Requests Section */}
+            {(pendingRequests.length > 0 || sentPendingRequests.length > 0) && (
+                <section className="friends-section pending-section" style={{ marginTop: '40px', paddingTop: '20px', borderTop: '1px solid var(--color-border)' }}>
+                    <h2 className="section-title">
+                        Pending Requests
+                        <span className="notification-badge">{pendingRequests.length + sentPendingRequests.length}</span>
+                    </h2>
+                    <div className="pending-requests-list">
+                        {/* Received Requests */}
+                        {pendingRequests.map((request) => (
+                            <div key={request.requestId} className="pending-request-card">
+                                <div className="user-avatar">👤</div>
+                                <div className="user-info">
+                                    <h3 className="user-name">
+                                        {request.fromUser?.username || 'Unknown User'}
+                                    </h3>
+                                    <p className="user-email">{request.fromUser?.email}</p>
+                                </div>
+                                <div className="request-actions">
+                                    <button
+                                        className="btn btn-primary"
+                                        onClick={() => handleAcceptRequest(request.requestId)}
+                                    >
+                                        ✓ Accept
+                                    </button>
+                                    <button
+                                        className="btn btn-secondary"
+                                        onClick={() => handleRejectRequest(request.requestId)}
+                                    >
+                                        ✕ Reject
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+
+                        {/* Sent Requests */}
+                        {sentPendingRequests.map((request) => (
+                            <div key={request.requestId} className="pending-request-card" style={{ borderColor: 'var(--color-border)' }}>
+                                <div className="user-avatar">👤</div>
+                                <div className="user-info">
+                                    <h3 className="user-name">
+                                        {request.toUser?.username || 'Unknown User'}
+                                    </h3>
+                                    <p className="user-email">{request.toUser?.email}</p>
+                                    <span style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>Sent Request</span>
+                                </div>
+                                <div className="request-actions">
+                                    <span style={{
+                                        padding: '6px 12px',
+                                        background: 'var(--color-bg-tertiary)',
+                                        borderRadius: 'var(--radius-md)',
+                                        fontSize: '0.9rem',
+                                        color: 'var(--color-text-secondary)'
+                                    }}>
+                                        Waiting for approval...
+                                    </span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </section>
+            )}
+
+
         </div>
     );
 };
