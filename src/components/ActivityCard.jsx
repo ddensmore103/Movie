@@ -1,4 +1,5 @@
 import { getImageUrl } from '../services/tmdb';
+import UserAvatar from './UserAvatar';
 import './ActivityCard.css';
 
 const ActivityCard = ({ activity, onClick }) => {
@@ -46,7 +47,7 @@ const ActivityCard = ({ activity, onClick }) => {
                 />
                 <div className="activity-overlay">
                     <div className="activity-user-badge">
-                        <span className="user-avatar-small">{user.avatar || '👤'}</span>
+                        <UserAvatar user={user} size="small" className="user-avatar-small-override" />
                         <span className="user-name-small">{user.username || user.name || 'Unknown'}</span>
                     </div>
                 </div>

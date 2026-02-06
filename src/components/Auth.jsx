@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { signUpWithEmail, loginWithEmail, signInWithGoogle, sendEmailVerification, auth } from '../firebase';
 import './Auth.css';
 
@@ -6,6 +7,7 @@ import './Auth.css';
  * Authentication component with sign up, login, Google sign-in, and logout
  */
 const Auth = () => {
+    const navigate = useNavigate();
     const [isSignUp, setIsSignUp] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -41,6 +43,7 @@ const Auth = () => {
                     setLoading(false);
                     return;
                 }
+                navigate('/');
             }
             // Auth state will be updated by onAuthStateChanged in AuthContext
         } catch (err) {
@@ -84,6 +87,7 @@ const Auth = () => {
 
         try {
             await signInWithGoogle();
+            navigate('/');
             // Auth state will be updated by onAuthStateChanged in AuthContext
         } catch (err) {
             let errorMessage = err.message;
@@ -133,6 +137,7 @@ const Auth = () => {
                 await user.reload(); // Refresh user data
                 if (user.emailVerified) {
                     setAwaitingVerification(false);
+                    navigate('/');
                     // User will be redirected by AuthContext
                 } else {
                     setError('Email not verified yet. Please check your inbox and click the verification link.');

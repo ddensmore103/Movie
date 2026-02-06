@@ -60,7 +60,7 @@ const AllActivity = () => {
                     color: 'var(--color-secondary)',
                     fontSize: '1.2rem'
                 }}>
-                    No recent activity, go watch some movies! 🎬
+                    No recent activity, go watch some movies!
                 </div>
             )}
         </div>

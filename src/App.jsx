@@ -52,29 +52,27 @@ function AppContent() {
 
   // Show main app if user is logged in
   return (
-    <Router>
-      <div className="app">
-        <Sidebar />
-        <main className="main-content">
+    <div className="app">
+      <Sidebar />
+      <main className="main-content">
 
-          {/* Routes */}
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/movie/:id" element={<MovieDetail />} />
-            <Route path="/activity" element={<AllActivity />} />
-            <Route path="/movies" element={<AllMovies />} />
-            <Route path="/lists" element={<Lists />} />
-            <Route path="/lists/:listId" element={<ListDetail />} />
-            <Route path="/friends" element={<Friends />} />
-            <Route path="/profile/:userId" element={<Profile />} />
-            <Route path="/profile/edit" element={<EditProfile />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/admin" element={<Admin />} />
-          </Routes>
-        </main>
-      </div>
-    </Router>
+        {/* Routes */}
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/movie/:id" element={<MovieDetail />} />
+          <Route path="/activity" element={<AllActivity />} />
+          <Route path="/movies" element={<AllMovies />} />
+          <Route path="/lists" element={<Lists />} />
+          <Route path="/lists/:listId" element={<ListDetail />} />
+          <Route path="/friends" element={<Friends />} />
+          <Route path="/profile/:userId" element={<Profile />} />
+          <Route path="/profile/edit" element={<EditProfile />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/admin" element={<Admin />} />
+        </Routes>
+      </main>
+    </div>
   );
 }
 
@@ -85,7 +83,9 @@ function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <AppContent />
+        <Router>
+          <AppContent />
+        </Router>
       </AuthProvider>
     </ThemeProvider>
   );

@@ -305,3 +305,13 @@
         width: 100%;
     }
 }
+
+.clickable-name {
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.clickable-name:hover {
+    color: var(--color-primary);
+    text-decoration: underline;
+}

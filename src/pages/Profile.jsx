@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { getUser, getUserLists, getFriends, getUserReviews, getActivityFeed } from '../services/api';
+import { LuVideo, LuStar, LuList, LuUsers } from 'react-icons/lu';
 import ActivityCard from '../components/ActivityCard';
+import UserAvatar from '../components/UserAvatar';
 import './Profile.css';
 
 const Profile = () => {
@@ -105,11 +107,13 @@ const Profile = () => {
         }
     }, [userId, isOwnProfile, currentUser, loading, user]);
 
+    const reviewCount = reviews.filter(r => r.reviewText && r.reviewText.trim()).length;
+
     const stats = [
-        { label: 'Lists Created', value: lists.length, icon: '📋' },
-        { label: 'Movies Watched', value: reviews.length, icon: '🎬' },
-        { label: 'Friends', value: friends.length, icon: '👥' },
-        { label: 'Reviews', value: reviews.filter(r => r.reviewText && r.reviewText.trim()).length, icon: '✍️' }
+        { label: lists.length === 1 ? 'List Created' : 'Lists Created', value: lists.length, icon: <LuList /> },
+        { label: reviews.length === 1 ? 'Movie Watched' : 'Movies Watched', value: reviews.length, icon: <LuVideo /> },
+        { label: friends.length === 1 ? 'Friend' : 'Friends', value: friends.length, icon: <LuUsers /> },
+        { label: reviewCount === 1 ? 'Review' : 'Reviews', value: reviewCount, icon: <LuStar /> }
     ];
 
     if (loading) {
@@ -130,9 +134,6 @@ const Profile = () => {
 
     // Extract display name from email or use displayName if available
     const displayName = displayUser?.displayName || displayUser?.username || displayUser?.email?.split('@')[0] || 'User';
-    const userAvatar = displayUser?.photoURL ? (
-        <img src={displayUser.photoURL} alt="Profile" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
-    ) : '👨‍🚀';
 
     return (
         <div className="profile-page">
@@ -161,7 +162,9 @@ const Profile = () => {
             )}
 
             <div className="profile-header">
-                <div className="profile-avatar-large">{userAvatar}</div>
+                <div className="profile-avatar-large">
+                    <UserAvatar user={displayUser} size="xl" />
+                </div>
                 <div className="profile-info">
                     <h1 className="profile-name" style={{ marginBottom: '0px' }}>{displayName}</h1>
                     <p style={{ fontSize: '0.9rem', opacity: 0.7, marginTop: '2px', marginBottom: '0' }}>
@@ -203,7 +206,7 @@ const Profile = () => {
                                     onClick={() => navigate(`/lists/${list.listId}`)}
                                     style={{ cursor: 'pointer' }}
                                 >
-                                    <div className="recent-movie-emoji">{list.emoji || '📋'}</div>
+                                    {list.movies?.length > 0 && <div className="recent-movie-emoji">{list.emoji || '📋'}</div>}
                                     <div className="recent-movie-title">
                                         {list.name}
                                     </div>

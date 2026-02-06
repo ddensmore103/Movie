@@ -264,7 +264,7 @@ const Lists = () => {
                 {/* Collaborating Lists Section */}
                 {collaboratingLists.length > 0 && (
                     <section className="lists-section">
-                        <h2 className="section-title">🤝 Collaborating</h2>
+                        <h2 className="section-title">Shared Lists</h2>
                         <div className="lists-grid">
                             {collaboratingLists.map((list) => (
                                 <div

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { searchUsers } from '../services/api';
+import UserAvatar from './UserAvatar';
 import './UserSearchBar.css';
 
 const UserSearchBar = ({ onUserSelect, excludeUserIds = [] }) => {
@@ -95,7 +96,9 @@ const UserSearchBar = ({ onUserSelect, excludeUserIds = [] }) => {
                             onClick={() => handleUserClick(user)}
                         >
                             <div className="user-info">
-                                <div className="user-avatar">👤</div>
+                                <div className="user-avatar-container">
+                                    <UserAvatar user={user} size="small" />
+                                </div>
                                 <div className="user-details">
                                     <div className="user-name">{user.username || 'Unknown'}</div>
                                     <div className="user-email">{user.email}</div>

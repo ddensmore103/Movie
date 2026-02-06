@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import StarRating from './StarRating';
 import ConfirmationModal from './ConfirmationModal';
+import UserAvatar from './UserAvatar';
 import './ReviewCard.css';
 
 const ReviewCard = ({ review, onEdit, onDelete }) => {
@@ -39,8 +40,8 @@ const ReviewCard = ({ review, onEdit, onDelete }) => {
             <div className="review-card">
                 <div className="review-header">
                     <div className="review-user-info">
-                        <div className="user-avatar">
-                            {review.user?.username?.[0]?.toUpperCase() || '?'}
+                        <div className="user-avatar-container">
+                            <UserAvatar user={review.user} size="medium" />
                         </div>
                         <div>
                             <div className="review-username">

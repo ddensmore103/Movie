@@ -11,6 +11,7 @@ import {
     getFriends
 } from '../services/api';
 import './Friends.css';
+import UserAvatar from '../components/UserAvatar';
 
 const Friends = () => {
     const navigate = useNavigate();
@@ -128,7 +129,9 @@ const Friends = () => {
                             const alreadySent = sentRequests.has(user.userId);
                             return (
                                 <div key={user.userId} className="user-result-card">
-                                    <div className="user-avatar">👤</div>
+                                    <div className="user-avatar-container">
+                                        <UserAvatar user={user} size="medium" />
+                                    </div>
                                     <div className="user-info">
                                         <h3 className="user-name">{user.username || 'Unknown'}</h3>
                                         <p className="user-email">{user.email}</p>
@@ -161,7 +164,9 @@ const Friends = () => {
                                 onClick={() => navigate(`/profile/${friend.userId}`)}
                                 style={{ cursor: 'pointer' }}
                             >
-                                <div className="friend-avatar">👤</div>
+                                <div className="friend-avatar-container">
+                                    <UserAvatar user={friend} size="large" />
+                                </div>
                                 <h3 className="friend-name">{friend.username || 'Unknown'}</h3>
                                 <p className="friend-email">{friend.email}</p>
                             </div>
@@ -185,9 +190,14 @@ const Friends = () => {
                         {/* Received Requests */}
                         {pendingRequests.map((request) => (
                             <div key={request.requestId} className="pending-request-card">
-                                <div className="user-avatar">👤</div>
+                                <div className="user-avatar-container">
+                                    <UserAvatar user={request.fromUser} size="medium" />
+                                </div>
                                 <div className="user-info">
-                                    <h3 className="user-name">
+                                    <h3
+                                        className="user-name clickable-name"
+                                        onClick={() => navigate(`/profile/${request.fromUser?.userId}`)}
+                                    >
                                         {request.fromUser?.username || 'Unknown User'}
                                     </h3>
                                     <p className="user-email">{request.fromUser?.email}</p>
@@ -212,9 +222,14 @@ const Friends = () => {
                         {/* Sent Requests */}
                         {sentPendingRequests.map((request) => (
                             <div key={request.requestId} className="pending-request-card" style={{ borderColor: 'var(--color-border)' }}>
-                                <div className="user-avatar">👤</div>
+                                <div className="user-avatar-container">
+                                    <UserAvatar user={request.toUser} size="medium" />
+                                </div>
                                 <div className="user-info">
-                                    <h3 className="user-name">
+                                    <h3
+                                        className="user-name clickable-name"
+                                        onClick={() => navigate(`/profile/${request.toUser?.userId}`)}
+                                    >
                                         {request.toUser?.username || 'Unknown User'}
                                     </h3>
                                     <p className="user-email">{request.toUser?.email}</p>

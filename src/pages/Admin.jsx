@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { getAllUsers, adminDeleteUser } from '../services/api';
+import UserAvatar from '../components/UserAvatar';
 import './Admin.css';
 
 const Admin = () => {
@@ -75,8 +76,8 @@ const Admin = () => {
                             {users.map(user => (
                                 <tr key={user.userId}>
                                     <td className="user-cell">
-                                        <div className="user-avatar-small">
-                                            {user.username?.charAt(0).toUpperCase()}
+                                        <div className="user-avatar-small-container">
+                                            <UserAvatar user={user} size="small" />
                                         </div>
                                         <Link to={`/profile/${user.userId}`} className="admin-user-link">
                                             {user.username}

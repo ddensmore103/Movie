@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getFriends, addCollaborator, removeCollaborator, getListCollaborators } from '../services/api';
+import UserAvatar from './UserAvatar';
 import './ManageCollaboratorsModal.css';
 
 const ManageCollaboratorsModal = ({ listId, isOwner, onClose }) => {
@@ -80,7 +81,9 @@ const ManageCollaboratorsModal = ({ listId, isOwner, onClose }) => {
                                 <div className="collaborators-list">
                                     {collaborators.map((collab) => (
                                         <div key={collab.userId} className="collaborator-item">
-                                            <div className="collaborator-avatar">👤</div>
+                                            <div className="collaborator-avatar-container">
+                                                <UserAvatar user={collab.user || collab} size="small" />
+                                            </div>
                                             <div className="collaborator-info">
                                                 <div className="collaborator-name">
                                                     {collab.user?.username || collab.user?.email || 'Unknown'}
@@ -111,7 +114,9 @@ const ManageCollaboratorsModal = ({ listId, isOwner, onClose }) => {
                                     <div className="friends-list">
                                         {availableFriends.map((friend) => (
                                             <div key={friend.userId} className="friend-item">
-                                                <div className="friend-avatar">👤</div>
+                                                <div className="friend-avatar-container">
+                                                    <UserAvatar user={friend} size="small" />
+                                                </div>
                                                 <div className="friend-info">
                                                     <div className="friend-name">
                                                         {friend.username || friend.email}

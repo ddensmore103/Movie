@@ -1,0 +1,44 @@
+.user-avatar {
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: linear-gradient(135deg, var(--color-bg-tertiary) 0%, var(--color-bg-secondary) 100%);
+    border: 1px solid var(--color-border);
+    flex-shrink: 0;
+}
+
+.user-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.user-avatar.size-small {
+    width: 24px;
+    height: 24px;
+    font-size: 14px;
+}
+
+.user-avatar.size-medium {
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+}
+
+.user-avatar.size-large {
+    width: 80px;
+    height: 80px;
+    font-size: 40px;
+}
+
+.user-avatar.size-xl {
+    width: 120px;
+    height: 120px;
+    font-size: 60px;
+}
+
+.default-avatar-icon {
+    color: var(--color-text-secondary);
+}
