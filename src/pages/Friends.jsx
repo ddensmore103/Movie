@@ -129,11 +129,20 @@ const Friends = () => {
                             const alreadySent = sentRequests.has(user.userId);
                             return (
                                 <div key={user.userId} className="user-result-card">
-                                    <div className="user-avatar-container">
+                                    <div
+                                        className="user-avatar-container"
+                                        onClick={() => navigate(`/profile/${user.userId}`)}
+                                        style={{ cursor: 'pointer' }}
+                                    >
                                         <UserAvatar user={user} size="medium" />
                                     </div>
                                     <div className="user-info">
-                                        <h3 className="user-name">{user.username || 'Unknown'}</h3>
+                                        <h3
+                                            className="user-name clickable-name"
+                                            onClick={() => navigate(`/profile/${user.userId}`)}
+                                        >
+                                            {user.username || 'Unknown'}
+                                        </h3>
                                         <p className="user-email">{user.email}</p>
                                     </div>
                                     <button

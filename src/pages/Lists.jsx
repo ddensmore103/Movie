@@ -225,6 +225,7 @@ const Lists = () => {
                                             </button>
                                         </div>
                                     </div>
+                                    {(list.movies?.length > 0 || list.name === 'Favorites') && <div className="list-emoji">{list.emoji || '📋'}</div>}
                                     <h3 className="list-name">
                                         {list.name}
                                     </h3>
@@ -301,6 +302,7 @@ const Lists = () => {
                                         </div>
                                     </div>
                                     <div className="list-badge collaborating-badge">Collaborating</div>
+                                    {(list.movies?.length > 0 || list.name === 'Favorites') && <div className="list-emoji">{list.emoji || '📋'}</div>}
                                     <h3 className="list-name">{list.name}</h3>
                                     <p className="list-count">
                                         {list.movies?.length || 0} {list.movies?.length === 1 ? 'movie' : 'movies'}

@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { deleteAccount, auth } from '../firebase';
-import { deleteUserData } from '../services/api';
+import { deleteUserData, getUser, updateUserProfile } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 import ConfirmationModal from '../components/ConfirmationModal';
 import './Settings.css';
 
@@ -11,18 +12,54 @@ const Settings = () => {
         emailNotifications: true,
         friendRequests: true,
         activityUpdates: false,
-        publicProfile: true
+        publicProfile: true // Default to public
     });
 
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [error, setError] = useState(null);
+    const { currentUser } = useAuth(); // Get current user
 
-    const handleToggle = (key) => {
+    // Fetch user settings on mount
+    useEffect(() => {
+        const fetchSettings = async () => {
+            if (currentUser?.uid) {
+                try {
+                    const userData = await getUser(currentUser.uid);
+                    setSettings(prev => ({
+                        ...prev,
+                        publicProfile: !userData.isPrivate // isPrivate=true means publicProfile=false
+                    }));
+                } catch (err) {
+                    console.error('Error fetching settings:', err);
+                }
+            }
+        };
+        fetchSettings();
+    }, [currentUser]);
+
+    const handleToggle = async (key) => {
+        const newValue = !settings[key];
+
         setSettings(prev => ({
             ...prev,
-            [key]: !prev[key]
+            [key]: newValue
         }));
+
+        // Persist to backend if it's the privacy setting
+        if (key === 'publicProfile') {
+            try {
+                // publicProfile = true => isPrivate = false
+                await updateUserProfile(currentUser.uid, { isPrivate: !newValue });
+            } catch (err) {
+                console.error('Error updating privacy setting:', err);
+                // Revert on failure
+                setSettings(prev => ({
+                    ...prev,
+                    [key]: !newValue
+                }));
+            }
+        }
     };
 
     const handleDeleteAccount = async () => {

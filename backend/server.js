@@ -439,7 +439,7 @@ app.get("/users/:userId", async (req, res) => {
 app.put("/users/:userId", authMiddleware, async (req, res) => {
     try {
         const { userId } = req.params;
-        const { username, bio, photoURL, email } = req.body;
+        const { username, bio, photoURL, email, isPrivate } = req.body;
 
         // Verify the requesting user is updating their own account
         if (req.user.uid !== userId) {
@@ -470,6 +470,10 @@ app.put("/users/:userId", authMiddleware, async (req, res) => {
         if (email) {
             updateExpression += ", email = :email";
             expressionAttributeValues[":email"] = email;
+        }
+        if (isPrivate !== undefined) {
+            updateExpression += ", isPrivate = :isPrivate";
+            expressionAttributeValues[":isPrivate"] = isPrivate;
         }
 
         await db.send(new UpdateCommand({
@@ -780,16 +784,89 @@ app.get("/lists/collaborating", authMiddleware, async (req, res) => {
     }
 });
 
+// Get user stats (publicly available counts)
+app.get('/users/:userId/stats', async (req, res) => {
+    try {
+        const { userId } = req.params;
+
+        // 1. Get Lists Count
+        const listsScan = new ScanCommand({
+            TableName: "Lists",
+            FilterExpression: "ownerId = :uid",
+            ExpressionAttributeValues: { ":uid": userId },
+            Select: "COUNT"
+        });
+        const listsResult = await db.send(listsScan);
+
+        // 2. Get Reviews Count
+        const reviewsScan = new ScanCommand({
+            TableName: "Reviews",
+            FilterExpression: "userId = :uid",
+            ExpressionAttributeValues: { ":uid": userId },
+            Select: "COUNT"
+        });
+        const reviewsResult = await db.send(reviewsScan);
+
+        // 3. Get Friends Count
+        const friendsScan1 = new ScanCommand({
+            TableName: "Friendships",
+            FilterExpression: "userId1 = :uid",
+            ExpressionAttributeValues: { ":uid": userId },
+            Select: "COUNT"
+        });
+        const friendsResult1 = await db.send(friendsScan1);
+
+        const friendsScan2 = new ScanCommand({
+            TableName: "Friendships",
+            FilterExpression: "userId2 = :uid",
+            ExpressionAttributeValues: { ":uid": userId },
+            Select: "COUNT"
+        });
+        const friendsResult2 = await db.send(friendsScan2);
+
+        const friendsCount = (friendsResult1.Count || 0) + (friendsResult2.Count || 0);
+
+        res.json({
+            listsCount: listsResult.Count || 0,
+            reviewsCount: reviewsResult.Count || 0,
+            friendsCount: friendsCount
+        });
+    } catch (error) {
+        console.error('Error fetching user stats:', error);
+        res.status(500).json({ error: 'Failed to fetch user stats' });
+    }
+});
+
 // 🔍 Get lists for a specific user - PROTECTED ROUTE
 app.get("/lists/user/:userId", authMiddleware, async (req, res) => {
     try {
         const { userId } = req.params;
 
-        // Verify the requesting user is asking for their own lists
+        // Allow viewing other users' lists (public profiles)
+        // Removed the check: if (req.user.uid !== userId) { ... }
+
+        // CHECK PRIVACY
         if (req.user.uid !== userId) {
-            return res.status(403).json({
-                error: "Forbidden: You can only access your own lists"
-            });
+            // Get target user to check isPrivate
+            const userResult = await db.send(new GetCommand({
+                TableName: "Users",
+                Key: { userId }
+            }));
+
+            const targetUser = userResult.Item;
+
+            if (targetUser && targetUser.isPrivate) {
+                // Check if they are friends
+                const friendshipCheck = await db.send(new GetCommand({
+                    TableName: "Friendships",
+                    Key: { userId: req.user.uid, friendId: userId }
+                }));
+
+                if (!friendshipCheck.Item) {
+                    // Private and not friends -> Return empty array
+                    return res.json([]);
+                }
+            }
         }
 
         // Query DynamoDB for lists owned by this user
@@ -1533,6 +1610,51 @@ app.get("/friends", authMiddleware, async (req, res) => {
     }
 });
 
+// 🔍 Get specific user's friends list - PROTECTED ROUTE (Publicly accessible to authenticated users)
+app.get("/friends/user/:userId", authMiddleware, async (req, res) => {
+    try {
+        const { userId } = req.params;
+
+        const command = new QueryCommand({
+            TableName: "Friendships",
+            KeyConditionExpression: "userId = :userId",
+            ExpressionAttributeValues: {
+                ":userId": userId,
+            },
+        });
+
+        const result = await db.send(command);
+        const friendships = result.Items || [];
+
+        // Fetch user details for each friend
+        const friendsWithDetails = await Promise.all(
+            friendships.map(async (friendship) => {
+                try {
+                    const userResult = await db.send(
+                        new GetCommand({
+                            TableName: "Users",
+                            Key: { userId: friendship.friendId },
+                        })
+                    );
+
+                    return userResult.Item || null;
+                } catch (err) {
+                    console.error(`Error fetching friend ${friendship.friendId}:`, err);
+                    return null;
+                }
+            })
+        );
+
+        // Filter out null values
+        const validFriends = friendsWithDetails.filter(friend => friend !== null);
+
+        res.json(validFriends);
+    } catch (err) {
+        console.error("GET USER FRIENDS ERROR:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 /* =========================
    ACTIVITY FEED
 ========================= */
@@ -1826,10 +1948,30 @@ app.get("/reviews/movie/:movieId", async (req, res) => {
     }
 });
 
-// 🔍 Get all reviews by a specific user
-app.get("/reviews/user/:userId", async (req, res) => {
+// 🔍 Get all reviews by a specific user - UPDATED WITH PRIVACY CHECK
+app.get("/reviews/user/:userId", authMiddleware, async (req, res) => {
     try {
         const { userId } = req.params;
+
+        // CHECK PRIVACY
+        if (req.user.uid !== userId) {
+            const userResult = await db.send(new GetCommand({
+                TableName: "Users",
+                Key: { userId }
+            }));
+            const targetUser = userResult.Item;
+
+            if (targetUser && targetUser.isPrivate) {
+                const friendshipCheck = await db.send(new GetCommand({
+                    TableName: "Friendships",
+                    Key: { userId: req.user.uid, friendId: userId }
+                }));
+
+                if (!friendshipCheck.Item) {
+                    return res.json([]);
+                }
+            }
+        }
 
         const command = new QueryCommand({
             TableName: "Reviews",

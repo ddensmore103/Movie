@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { getUser, getUserLists, getFriends, getUserReviews, getActivityFeed } from '../services/api';
-import { LuVideo, LuStar, LuList, LuUsers } from 'react-icons/lu';
+import { getUser, getUserLists, getFriends, getUserFriends, getUserReviews, getActivityFeed, getUserStats } from '../services/api';
+import { LuVideo, LuStar, LuList, LuUsers, LuLock } from 'react-icons/lu';
 import ActivityCard from '../components/ActivityCard';
 import UserAvatar from '../components/UserAvatar';
 import './Profile.css';
@@ -18,6 +18,7 @@ const Profile = () => {
     const [activity, setActivity] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [stats, setStats] = useState([]);
 
     // Determine if viewing own profile or another user's profile
     const isOwnProfile = !userId || userId === currentUser?.uid;
@@ -52,35 +53,53 @@ const Profile = () => {
     // Fetch user's lists, friends, reviews, and activity
     useEffect(() => {
         const fetchUserData = async () => {
+            const targetUserId = isOwnProfile ? currentUser?.uid : userId;
+            if (!targetUserId) return;
+
+            // 1. Fetch Stats (Always visible, independent try-catch)
+            let fetchedStats = null;
             try {
-                const targetUserId = isOwnProfile ? currentUser?.uid : userId;
-                if (!targetUserId) {
-                    console.log('No targetUserId available');
-                    return;
+                fetchedStats = await getUserStats(targetUserId);
+                if (fetchedStats) {
+                    setStats([
+                        {
+                            label: fetchedStats.listsCount === 1 ? 'List Created' : 'Lists Created',
+                            value: fetchedStats.listsCount,
+                            icon: <LuList />
+                        },
+                        {
+                            label: fetchedStats.reviewsCount === 1 ? 'Movie Watched' : 'Movies Watched',
+                            value: fetchedStats.reviewsCount,
+                            icon: <LuVideo />
+                        },
+                        {
+                            label: fetchedStats.friendsCount === 1 ? 'Friend' : 'Friends',
+                            value: fetchedStats.friendsCount,
+                            icon: <LuUsers />
+                        },
+                        {
+                            label: fetchedStats.reviewsCount === 1 ? 'Review' : 'Reviews',
+                            value: fetchedStats.reviewsCount,
+                            icon: <LuStar />
+                        }
+                    ]);
                 }
+            } catch (statsErr) {
+                console.error('Error fetching stats:', statsErr);
+            }
 
-                console.log('Fetching data for userId:', targetUserId);
-
-                // Fetch lists, friends, reviews, and activity in parallel
+            // 2. Fetch Content (Lists, Friends, Reviews, Activity)
+            try {
                 const [userLists, userFriends, userReviews, userActivity] = await Promise.all([
                     getUserLists(targetUserId),
-                    isOwnProfile ? getFriends() : Promise.resolve([]), // Only fetch friends for own profile
+                    getUserFriends(targetUserId),
                     getUserReviews(targetUserId),
-                    isOwnProfile ? getActivityFeed() : getUserReviews(targetUserId).then(reviews => reviews.slice(0, 10)) // Activity feed for own profile, recent reviews for others
+                    isOwnProfile ? getActivityFeed() : getUserReviews(targetUserId).then(reviews => reviews.slice(0, 10))
                 ]);
 
-                console.log('Fetched data:', {
-                    lists: userLists.length,
-                    friends: userFriends.length,
-                    reviews: userReviews.length,
-                    activity: userActivity.length
-                });
-
-                // Sort: Starred first, then by createdAt desc (or however default sort was)
-                // Assuming default order from backend was reliable, but we want starred first
+                // Sort: Starred first
                 const sortedLists = userLists.sort((a, b) => {
                     if (a.isStarred === b.isStarred) {
-                        // Fallback sort, e.g. newest first
                         return new Date(b.createdAt) - new Date(a.createdAt);
                     }
                     return a.isStarred ? -1 : 1;
@@ -90,31 +109,27 @@ const Profile = () => {
                 setFriends(userFriends);
                 setReviews(userReviews);
                 setActivity(userActivity);
+
+                // Fallback for stats if separate fetch failed
+                if (!fetchedStats) {
+                    const reviewCount = userReviews.filter(r => r.reviewText && r.reviewText.trim()).length;
+                    setStats([
+                        { label: userLists.length === 1 ? 'List Created' : 'Lists Created', value: userLists.length, icon: <LuList /> },
+                        { label: userReviews.length === 1 ? 'Movie Watched' : 'Movies Watched', value: userReviews.length, icon: <LuVideo /> },
+                        { label: userFriends.length === 1 ? 'Friend' : 'Friends', value: userFriends.length, icon: <LuUsers /> },
+                        { label: reviewCount === 1 ? 'Review' : 'Reviews', value: reviewCount, icon: <LuStar /> }
+                    ]);
+                }
+
             } catch (err) {
-                console.error('Error fetching user data:', err);
+                console.error('Error fetching user content:', err);
             }
         };
 
-        // Fetch data when we have a currentUser (for own profile) or when user data is loaded (for other profiles)
-        if (isOwnProfile) {
-            if (currentUser?.uid) {
-                fetchUserData();
-            }
-        } else {
-            if (!loading && user) {
-                fetchUserData();
-            }
+        if (userId || isOwnProfile) {
+            fetchUserData();
         }
-    }, [userId, isOwnProfile, currentUser, loading, user]);
-
-    const reviewCount = reviews.filter(r => r.reviewText && r.reviewText.trim()).length;
-
-    const stats = [
-        { label: lists.length === 1 ? 'List Created' : 'Lists Created', value: lists.length, icon: <LuList /> },
-        { label: reviews.length === 1 ? 'Movie Watched' : 'Movies Watched', value: reviews.length, icon: <LuVideo /> },
-        { label: friends.length === 1 ? 'Friend' : 'Friends', value: friends.length, icon: <LuUsers /> },
-        { label: reviewCount === 1 ? 'Review' : 'Reviews', value: reviewCount, icon: <LuStar /> }
-    ];
+    }, [userId, isOwnProfile, currentUser]);
 
     if (loading) {
         return (
@@ -134,6 +149,13 @@ const Profile = () => {
 
     // Extract display name from email or use displayName if available
     const displayName = displayUser?.displayName || displayUser?.username || displayUser?.email?.split('@')[0] || 'User';
+
+    // Check if profile is private and viewer is not a friend (and not owner)
+    // If lists are empty and user is private, we assume blocked or empty private profile
+    const isPrivateProfile = !isOwnProfile && displayUser?.isPrivate && lists.length === 0;
+
+    // If it's private, we show the lock message instead of content
+    const showPrivateMessage = isPrivateProfile;
 
     return (
         <div className="profile-page">
@@ -195,57 +217,67 @@ const Profile = () => {
             </div>
 
             <div className="profile-content">
-                <section className="profile-section">
-                    <h2 className="section-title">Lists ({lists.length})</h2>
-                    {lists.length > 0 ? (
-                        <div className="recent-movies">
-                            {lists.map((list) => (
-                                <div
-                                    key={list.listId}
-                                    className="recent-movie-card"
-                                    onClick={() => navigate(`/lists/${list.listId}`)}
-                                    style={{ cursor: 'pointer' }}
-                                >
-                                    {list.movies?.length > 0 && <div className="recent-movie-emoji">{list.emoji || '📋'}</div>}
-                                    <div className="recent-movie-title">
-                                        {list.name}
-                                    </div>
-                                    <div style={{ fontSize: '0.85rem', opacity: 0.7, marginTop: '4px' }}>
-                                        {list.movies?.length || 0} movies
-                                    </div>
+                {showPrivateMessage ? (
+                    <div className="private-profile-message" style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-secondary)' }}>
+                        <LuLock size={48} style={{ marginBottom: '16px', opacity: 0.5 }} />
+                        <h2 style={{ fontSize: '1.5rem', marginBottom: '8px', color: 'var(--text-primary)' }}>This account is private</h2>
+                        <p>Follow this user to see their lists and activity.</p>
+                    </div>
+                ) : (
+                    <>
+                        <section className="profile-section">
+                            <h2 className="section-title">Lists ({lists.length})</h2>
+                            {lists.length > 0 ? (
+                                <div className="recent-movies">
+                                    {lists.map((list) => (
+                                        <div
+                                            key={list.listId}
+                                            className="recent-movie-card"
+                                            onClick={() => navigate(`/lists/${list.listId}`)}
+                                            style={{ cursor: 'pointer' }}
+                                        >
+                                            {(list.movies?.length > 0 || list.name === 'Favorites') && <div className="recent-movie-emoji">{list.emoji || '📋'}</div>}
+                                            <div className="recent-movie-title">
+                                                {list.name}
+                                            </div>
+                                            <div style={{ fontSize: '0.85rem', opacity: 0.7, marginTop: '4px' }}>
+                                                {list.movies?.length || 0} movies
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="activity-placeholder">
-                            <p>{isOwnProfile ? 'You haven\'t created any lists yet' : 'No lists yet'}</p>
-                        </div>
-                    )}
-                </section>
+                            ) : (
+                                <div className="activity-placeholder">
+                                    <p>{isOwnProfile ? 'You haven\'t created any lists yet' : 'No lists yet'}</p>
+                                </div>
+                            )}
+                        </section>
 
-                <section className="profile-section">
-                    <h2 className="section-title">Recent Activity</h2>
-                    {activity.length > 0 ? (
-                        <div className="activity-feed">
-                            {activity.map((item, index) => (
-                                <ActivityCard
-                                    key={item.reviewId || index}
-                                    activity={item}
-                                    onClick={() => {
-                                        // Navigate to movie details if needed
-                                        if (item.tmdbId) {
-                                            navigate(`/movie/${item.tmdbId}`);
-                                        }
-                                    }}
-                                />
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="activity-placeholder">
-                            <p>{isOwnProfile ? 'Your recent activity will appear here' : 'No recent activity'}</p>
-                        </div>
-                    )}
-                </section>
+                        <section className="profile-section">
+                            <h2 className="section-title">Recent Activity</h2>
+                            {activity.length > 0 ? (
+                                <div className="activity-feed">
+                                    {activity.map((item, index) => (
+                                        <ActivityCard
+                                            key={item.reviewId || index}
+                                            activity={item}
+                                            onClick={() => {
+                                                // Navigate to movie details if needed
+                                                if (item.tmdbId) {
+                                                    navigate(`/movie/${item.tmdbId}`);
+                                                }
+                                            }}
+                                        />
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="activity-placeholder">
+                                    <p>{isOwnProfile ? 'Your recent activity will appear here' : 'No recent activity'}</p>
+                                </div>
+                            )}
+                        </section>
+                    </>
+                )}
             </div>
         </div>
     );

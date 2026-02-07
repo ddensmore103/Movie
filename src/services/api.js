@@ -68,6 +68,15 @@ export const getUser = async (userId) => {
 };
 
 /**
+ * Get user statistics (lists, reviews, friends counts)
+ * @param {string} userId - User ID
+ * @returns {Promise<Object>} User stats
+ */
+export const getUserStats = async (userId) => {
+    return apiFetch(`/users/${userId}/stats`);
+};
+
+/**
  * Update user profile data
  * @param {string} userId - User ID
  * @param {Object} userData - Data to update (username, bio, photoURL)
@@ -403,6 +412,18 @@ export const getFriends = async () => {
 };
 
 /**
+ * Get a specific user's friends list
+ * @param {string} userId - User ID
+ * @returns {Promise<Array>} Array of friends
+ */
+export const getUserFriends = async (userId) => {
+    console.log('getUserFriends called with userId:', userId);
+    const result = await apiFetch(`/friends/user/${userId}`);
+    console.log('getUserFriends result:', result);
+    return result;
+};
+
+/**
  * Get activity feed (reviews from user and friends)
  * @returns {Promise<Array>} Array of reviews with user details
  */
@@ -468,9 +489,11 @@ export const unstarList = async (listId) => {
 export default {
     setAuthToken,
     getUser,
+    getUserStats,
     createUser,
     createList,
     getUserLists,
+    getUserFriends,
     getListById,
     deleteList,
     addMovieToList,
