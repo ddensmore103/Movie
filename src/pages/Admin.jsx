@@ -79,7 +79,11 @@ const Admin = () => {
                                         <div className="user-avatar-small-container">
                                             <UserAvatar user={user} size="small" />
                                         </div>
-                                        <Link to={`/profile/${user.userId}`} className="admin-user-link">
+                                        <Link
+                                            to={`/profile/${user.userId}`}
+                                            state={{ from: 'admin' }}
+                                            className="admin-user-link"
+                                        >
                                             {user.username}
                                         </Link>
                                     </td>

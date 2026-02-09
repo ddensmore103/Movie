@@ -1,15 +1,17 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { getUser, getUserLists, getFriends, getUserFriends, getUserReviews, getActivityFeed, getUserStats } from '../services/api';
 import { LuVideo, LuStar, LuList, LuUsers, LuLock } from 'react-icons/lu';
 import ActivityCard from '../components/ActivityCard';
 import UserAvatar from '../components/UserAvatar';
+import UserFriendsModal from '../components/UserFriendsModal';
 import './Profile.css';
 
 const Profile = () => {
     const { userId } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
     const { currentUser } = useAuth();
     const [user, setUser] = useState(null);
     const [lists, setLists] = useState([]);
@@ -19,9 +21,11 @@ const Profile = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [stats, setStats] = useState([]);
+    const [isFriendsModalOpen, setIsFriendsModalOpen] = useState(false);
 
     // Determine if viewing own profile or another user's profile
     const isOwnProfile = !userId || userId === currentUser?.uid;
+    const targetUserId = isOwnProfile ? currentUser?.uid : userId;
     // Prefer fetched 'user' data as it contains extra fields like bio
     const displayUser = user || (isOwnProfile ? currentUser : null);
 
@@ -75,7 +79,9 @@ const Profile = () => {
                         {
                             label: fetchedStats.friendsCount === 1 ? 'Friend' : 'Friends',
                             value: fetchedStats.friendsCount,
-                            icon: <LuUsers />
+                            icon: <LuUsers />,
+                            onClick: () => setIsFriendsModalOpen(true),
+                            clickable: true
                         },
                         {
                             label: fetchedStats.reviewsCount === 1 ? 'Review' : 'Reviews',
@@ -163,7 +169,13 @@ const Profile = () => {
             {!isOwnProfile && (
                 <button
                     className="back-button"
-                    onClick={() => navigate('/friends')}
+                    onClick={() => {
+                        if (location.state?.from === 'admin') {
+                            navigate('/admin');
+                        } else {
+                            navigate('/friends');
+                        }
+                    }}
                     style={{
                         marginBottom: '20px',
                         padding: '8px 16px',
@@ -179,7 +191,7 @@ const Profile = () => {
                         gap: '8px'
                     }}
                 >
-                    ← Back to Friends
+                    {location.state?.from === 'admin' ? '← Back to Admin' : '← Back to Friends'}
                 </button>
             )}
 
@@ -208,7 +220,11 @@ const Profile = () => {
 
             <div className="profile-stats">
                 {stats.map((stat, index) => (
-                    <div key={index} className="stat-card">
+                    <div
+                        key={index}
+                        className={`stat-card ${stat.clickable ? 'clickable' : ''}`}
+                        onClick={stat.onClick}
+                    >
                         <div className="stat-icon">{stat.icon}</div>
                         <div className="stat-value">{stat.value}</div>
                         <div className="stat-label">{stat.label}</div>
@@ -233,7 +249,9 @@ const Profile = () => {
                                         <div
                                             key={list.listId}
                                             className="recent-movie-card"
-                                            onClick={() => navigate(`/lists/${list.listId}`)}
+                                            onClick={() => navigate(`/lists/${list.listId}`, {
+                                                state: { from: 'profile', userId: targetUserId }
+                                            })}
                                             style={{ cursor: 'pointer' }}
                                         >
                                             {(list.movies?.length > 0 || list.name === 'Favorites') && <div className="recent-movie-emoji">{list.emoji || '📋'}</div>}
@@ -279,6 +297,12 @@ const Profile = () => {
                     </>
                 )}
             </div>
+            <UserFriendsModal
+                isOpen={isFriendsModalOpen}
+                onClose={() => setIsFriendsModalOpen(false)}
+                friends={friends}
+                profileUser={displayUser}
+            />
         </div>
     );
 };

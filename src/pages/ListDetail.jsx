@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { getListById, removeMovieFromList, starList, unstarList } from '../services/api';
 import { getImageUrl } from '../services/tmdb';
 import AddMovieToListModal from '../components/AddMovieToListModal';
@@ -10,6 +10,7 @@ import './ListDetail.css';
 const ListDetail = () => {
     const { listId } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
     const [list, setList] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -119,11 +120,24 @@ const ListDetail = () => {
         );
     }
 
+    // ... existing code ...
+
+    // ... existing code ...
+
     return (
         <div className="list-detail-page">
             <div className="list-detail-header">
-                <button className="back-button" onClick={() => navigate('/lists')}>
-                    ← Back to Lists
+                <button
+                    className="back-button"
+                    onClick={() => {
+                        if (location.state?.from === 'profile') {
+                            navigate(`/profile/${location.state.userId}`);
+                        } else {
+                            navigate('/lists');
+                        }
+                    }}
+                >
+                    {location.state?.from === 'profile' ? '← Back to Profile' : '← Back to Lists'}
                 </button>
                 <div className="list-detail-title">
                     <div className="title-row">
@@ -157,9 +171,11 @@ const ListDetail = () => {
                                     👥 Manage Collaborators
                                 </button>
                             )}
-                            <button className="add-movies-btn" onClick={handleOpenAddMovieModal}>
-                                ➕ Add Movies
-                            </button>
+                            {list.isOwner && (
+                                <button className="add-movies-btn" onClick={handleOpenAddMovieModal}>
+                                    ➕ Add Movies
+                                </button>
+                            )}
                         </div>
                     </div>
                     <p className="list-detail-meta">
@@ -204,26 +220,34 @@ const ListDetail = () => {
                                         </div>
                                     </div>
                                 </div>
-                                <button
-                                    className="remove-movie-btn"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleRemoveMovieClick(movie);
-                                    }}
-                                    disabled={removingMovieId === movie.movieId}
-                                    title="Remove from list"
-                                >
-                                    {removingMovieId === movie.movieId ? '⏳' : '✕'}
-                                </button>
+                                {list.isOwner && (
+                                    <button
+                                        className="remove-movie-btn"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleRemoveMovieClick(movie);
+                                        }}
+                                        disabled={removingMovieId === movie.movieId}
+                                        title="Remove from list"
+                                    >
+                                        {removingMovieId === movie.movieId ? '⏳' : '✕'}
+                                    </button>
+                                )}
                             </div>
                         ))}
                     </div>
                 ) : (
                     <div className="empty-list">
-                        <div className="empty-list-icon" onClick={handleOpenAddMovieModal}>
-                            ➕
-                        </div>
-                        <h2>No movies yet! Go ahead and add some</h2>
+                        {list.isOwner ? (
+                            <>
+                                <div className="empty-list-icon" onClick={handleOpenAddMovieModal}>
+                                    ➕
+                                </div>
+                                <h2>No movies yet! Go ahead and add some</h2>
+                            </>
+                        ) : (
+                            <h2>No movies in this list yet</h2>
+                        )}
                     </div>
                 )}
             </div>

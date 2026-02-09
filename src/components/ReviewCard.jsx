@@ -27,6 +27,20 @@ const ReviewCard = ({ review, onEdit, onDelete }) => {
 
     const formatDate = (dateString) => {
         if (!dateString) return null;
+
+        // Check if it's a date-only string (YYYY-MM-DD format)
+        // Parse it manually to avoid timezone issues
+        if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+            const [year, month, day] = dateString.split('-').map(Number);
+            const date = new Date(year, month - 1, day); // month is 0-indexed
+            return date.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        }
+
+        // For full datetime strings, use regular parsing
         const date = new Date(dateString);
         return date.toLocaleDateString('en-US', {
             year: 'numeric',
@@ -78,7 +92,7 @@ const ReviewCard = ({ review, onEdit, onDelete }) => {
                     <StarRating rating={review.rating} size="medium" />
                     {review.watchDate && (
                         <span className="watch-date">
-                            Watched on {formatDate(review.watchDate)}
+                            {review.isRewatch ? 'Rewatched' : 'Watched'} on {formatDate(review.watchDate)}
                         </span>
                     )}
                 </div>

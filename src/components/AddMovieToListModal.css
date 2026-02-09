@@ -144,6 +144,15 @@
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
 }
 
+.movie-result-clickable {
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.movie-result-clickable:hover {
+    opacity: 0.85;
+}
+
 .movie-result-poster {
     width: 100%;
     aspect-ratio: 2/3;
@@ -153,6 +162,7 @@
 
 .movie-result-info {
     padding: 12px;
+    padding-bottom: 6px;
 }
 
 .movie-result-title {
@@ -173,7 +183,11 @@
 .movie-result-year {
     font-size: 0.85rem;
     color: #888;
-    margin: 0 0 10px 0;
+    margin: 0;
+}
+
+.movie-result-actions {
+    padding: 0 12px 12px 12px;
 }
 
 .add-movie-btn {

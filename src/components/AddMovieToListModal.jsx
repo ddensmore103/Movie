@@ -1,14 +1,22 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { tmdbAPI, getImageUrl } from '../services/tmdb';
 import { addMovieToList } from '../services/api';
 import './AddMovieToListModal.css';
 
 const AddMovieToListModal = ({ isOpen, onClose, listId, listName, onMovieAdded }) => {
+    const navigate = useNavigate();
     const [query, setQuery] = useState('');
     const [searchResults, setSearchResults] = useState([]);
     const [loading, setLoading] = useState(false);
     const [addingMovieId, setAddingMovieId] = useState(null);
     const [error, setError] = useState(null);
+
+    // Navigate to movie details page
+    const handleMovieClick = (movieId) => {
+        onClose(); // Close the modal first
+        navigate(`/movie/${movieId}`);
+    };
 
     // Reset state when modal opens/closes
     useEffect(() => {
@@ -108,16 +116,24 @@ const AddMovieToListModal = ({ isOpen, onClose, listId, listName, onMovieAdded }
                         <div className="movies-grid">
                             {searchResults.map((movie) => (
                                 <div key={movie.id} className="movie-result-card">
-                                    <img
-                                        src={getImageUrl(movie.poster_path, 'small', 'poster')}
-                                        alt={movie.title}
-                                        className="movie-result-poster"
-                                    />
-                                    <div className="movie-result-info">
-                                        <h3 className="movie-result-title">{movie.title}</h3>
-                                        <p className="movie-result-year">
-                                            {movie.release_date ? new Date(movie.release_date).getFullYear() : 'N/A'}
-                                        </p>
+                                    <div
+                                        className="movie-result-clickable"
+                                        onClick={() => handleMovieClick(movie.id)}
+                                        title="View movie details"
+                                    >
+                                        <img
+                                            src={getImageUrl(movie.poster_path, 'small', 'poster')}
+                                            alt={movie.title}
+                                            className="movie-result-poster"
+                                        />
+                                        <div className="movie-result-info">
+                                            <h3 className="movie-result-title">{movie.title}</h3>
+                                            <p className="movie-result-year">
+                                                {movie.release_date ? new Date(movie.release_date).getFullYear() : 'N/A'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="movie-result-actions">
                                         <button
                                             className={`add-movie-btn ${addingMovieId === movie.id ? 'added' : ''}`}
                                             onClick={() => handleAddMovie(movie)}

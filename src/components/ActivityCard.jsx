@@ -31,11 +31,14 @@ const ActivityCard = ({ activity, onClick }) => {
     const timestamp = getTimeAgo(activity.createdAt || activity.timestamp);
 
     const getActivityBadge = () => {
-        if (reviewText && reviewText.trim()) {
-            return '✍️ Reviewed';
+        const isRewatch = activity.isRewatch;
+        if (isRewatch) {
+            return '🔄 Rewatched';
         }
-        return '⭐ Rated';
+        return '🎬 Watched';
     };
+
+    const hasReview = reviewText && reviewText.trim();
 
     return (
         <div className="activity-card-new" onClick={onClick}>
@@ -53,7 +56,10 @@ const ActivityCard = ({ activity, onClick }) => {
                 </div>
             </div>
             <div className="activity-movie-info">
-                <div className="activity-badge">{getActivityBadge()}</div>
+                <div className="activity-badge">
+                    {getActivityBadge()}
+                    {hasReview && <span className="review-indicator" title="Has review">✍️</span>}
+                </div>
                 <h3 className="activity-movie-title">{movieTitle}</h3>
                 <div className="activity-movie-meta">
                     <span className="activity-timestamp">{timestamp}</span>

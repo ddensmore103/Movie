@@ -86,3 +86,38 @@
 .form-group .star-rating {
     padding: var(--space-sm) 0;
 }
+
+/* Watch type toggle buttons */
+.watch-type-group {
+    margin-bottom: var(--space-lg);
+}
+
+.watch-type-buttons {
+    display: flex;
+    gap: var(--space-sm);
+}
+
+.watch-type-btn {
+    flex: 1;
+    padding: var(--space-md);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-bg-secondary);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    font-family: inherit;
+}
+
+.watch-type-btn:hover {
+    border-color: var(--color-primary);
+    color: var(--color-text-primary);
+}
+
+.watch-type-btn.active {
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+    border-color: transparent;
+    color: white;
+}

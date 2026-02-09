@@ -789,46 +789,53 @@ app.get('/users/:userId/stats', async (req, res) => {
     try {
         const { userId } = req.params;
 
-        // 1. Get Lists Count
-        const listsScan = new ScanCommand({
+        // Helper for paginated count
+        const countItems = async (commandClass, params) => {
+            let count = 0;
+            let lastEvaluatedKey = undefined;
+            do {
+                if (lastEvaluatedKey) {
+                    params.ExclusiveStartKey = lastEvaluatedKey;
+                }
+                const command = new commandClass(params);
+                const response = await db.send(command);
+                count += (response.Count || 0);
+                lastEvaluatedKey = response.LastEvaluatedKey;
+            } while (lastEvaluatedKey);
+            return count;
+        };
+
+        // 1. Get Lists Count (Scan with Pagination)
+        // Note: Unless we add an Index on ownerId, we must SCAN.
+        const listsCount = await countItems(ScanCommand, {
             TableName: "Lists",
             FilterExpression: "ownerId = :uid",
             ExpressionAttributeValues: { ":uid": userId },
             Select: "COUNT"
         });
-        const listsResult = await db.send(listsScan);
 
-        // 2. Get Reviews Count
-        const reviewsScan = new ScanCommand({
+        // 2. Get Reviews Count (Query on Index with Pagination)
+        const reviewsCount = await countItems(QueryCommand, {
             TableName: "Reviews",
-            FilterExpression: "userId = :uid",
+            IndexName: "userId-index",
+            KeyConditionExpression: "userId = :uid",
             ExpressionAttributeValues: { ":uid": userId },
             Select: "COUNT"
         });
-        const reviewsResult = await db.send(reviewsScan);
 
         // 3. Get Friends Count
-        const friendsScan1 = new ScanCommand({
+        // Query friendships where user is userId (efficient)
+        // Since friendships are bidirectional (two records per friendship), querying userId is sufficient.
+        const friendsCount = await countItems(QueryCommand, {
             TableName: "Friendships",
-            FilterExpression: "userId1 = :uid",
+            KeyConditionExpression: "userId = :uid",
             ExpressionAttributeValues: { ":uid": userId },
             Select: "COUNT"
         });
-        const friendsResult1 = await db.send(friendsScan1);
-
-        const friendsScan2 = new ScanCommand({
-            TableName: "Friendships",
-            FilterExpression: "userId2 = :uid",
-            ExpressionAttributeValues: { ":uid": userId },
-            Select: "COUNT"
-        });
-        const friendsResult2 = await db.send(friendsScan2);
-
-        const friendsCount = (friendsResult1.Count || 0) + (friendsResult2.Count || 0);
 
         res.json({
-            listsCount: listsResult.Count || 0,
-            reviewsCount: reviewsResult.Count || 0,
+            listsCount: listsCount,
+            reviewsCount: reviewsCount,
             friendsCount: friendsCount
         });
     } catch (error) {
@@ -916,13 +923,75 @@ app.get("/lists/user/:userId", authMiddleware, async (req, res) => {
     }
 });
 
-// 🔍 Get list by ID with movies - PROTECTED ROUTE (owner or collaborator)
-app.get("/lists/:listId", authMiddleware, canEditList, async (req, res) => {
+// 🔍 Get list by ID with movies - PROTECTED ROUTE (owner, collaborator, or friend)
+app.get("/lists/:listId", authMiddleware, async (req, res) => {
     try {
         const { listId } = req.params;
+        const requestingUserId = req.user.uid;
 
-        // List is already verified by canEditList middleware
-        const list = req.list;
+        // Get the list
+        const listResult = await db.send(
+            new GetCommand({
+                TableName: "Lists",
+                Key: { listId },
+            })
+        );
+
+        if (!listResult.Item) {
+            return res.status(404).json({ error: "List not found" });
+        }
+
+        const list = listResult.Item;
+        let isAllowed = false;
+        let isOwner = false;
+
+        // 1. Check if owner
+        if (list.ownerId === requestingUserId) {
+            isAllowed = true;
+            isOwner = true;
+        }
+
+        // 2. Check if collaborator
+        if (!isAllowed) {
+            const collaboratorResult = await db.send(
+                new GetCommand({
+                    TableName: "ListCollaborators",
+                    Key: { listId, userId: requestingUserId },
+                })
+            );
+            if (collaboratorResult.Item) {
+                isAllowed = true;
+            }
+        }
+
+        // 3. Check privacy / friendship (if not owner/collab)
+        if (!isAllowed) {
+            const ownerResult = await db.send(new GetCommand({
+                TableName: "Users",
+                Key: { userId: list.ownerId }
+            }));
+            const owner = ownerResult.Item;
+
+            if (owner) {
+                if (!owner.isPrivate) {
+                    // Public profile - allow (assuming lists are public on public profiles)
+                    isAllowed = true;
+                } else {
+                    // Private profile - check friendship
+                    const friendshipCheck = await db.send(new GetCommand({
+                        TableName: "Friendships",
+                        Key: { userId: requestingUserId, friendId: list.ownerId }
+                    }));
+                    if (friendshipCheck.Item) {
+                        isAllowed = true;
+                    }
+                }
+            }
+        }
+
+        if (!isAllowed) {
+            return res.status(403).json({ error: "Access denied" });
+        }
 
         // Get all movies in this list
         const moviesResult = await db.send(
@@ -966,7 +1035,7 @@ app.get("/lists/:listId", authMiddleware, canEditList, async (req, res) => {
             ...list,
             movies: moviesResult.Items || [],
             collaborators,
-            isOwner: req.isOwner,
+            isOwner: isOwner,
         });
     } catch (err) {
         console.error("GET LIST ERROR:", err);
@@ -1753,7 +1822,7 @@ app.get("/activity/feed", authMiddleware, async (req, res) => {
 // ➕ Create a new review - PROTECTED ROUTE
 app.post("/reviews", authMiddleware, async (req, res) => {
     try {
-        const { movieId, tmdbId, rating, reviewText, watchDate, movieTitle, posterPath } = req.body;
+        const { movieId, tmdbId, rating, reviewText, watchDate, movieTitle, posterPath, isRewatch } = req.body;
         const userId = req.user.uid;
 
         if (!movieId || !rating) {
@@ -1791,6 +1860,7 @@ app.post("/reviews", authMiddleware, async (req, res) => {
             rating: parseFloat(rating),
             reviewText: reviewText || null,
             watchDate: watchDate || null,
+            isRewatch: isRewatch || false,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
         };
@@ -1813,7 +1883,7 @@ app.post("/reviews", authMiddleware, async (req, res) => {
 app.put("/reviews/:reviewId", authMiddleware, async (req, res) => {
     try {
         const { reviewId } = req.params;
-        const { rating, reviewText, watchDate } = req.body;
+        const { rating, reviewText, watchDate, isRewatch } = req.body;
         const userId = req.user.uid;
 
         // Get the existing review
@@ -1844,6 +1914,7 @@ app.put("/reviews/:reviewId", authMiddleware, async (req, res) => {
             rating: rating !== undefined ? parseFloat(rating) : reviewResult.Item.rating,
             reviewText: reviewText !== undefined ? reviewText : reviewResult.Item.reviewText,
             watchDate: watchDate !== undefined ? watchDate : reviewResult.Item.watchDate,
+            isRewatch: isRewatch !== undefined ? isRewatch : reviewResult.Item.isRewatch,
             updatedAt: new Date().toISOString(),
         };
 

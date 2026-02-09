@@ -6,6 +6,7 @@ const ReviewModal = ({ isOpen, onClose, onSubmit, movie, existingReview = null }
     const [rating, setRating] = useState(existingReview?.rating || 0);
     const [reviewText, setReviewText] = useState(existingReview?.reviewText || '');
     const [watchDate, setWatchDate] = useState(existingReview?.watchDate || '');
+    const [isRewatch, setIsRewatch] = useState(existingReview?.isRewatch || false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
@@ -13,10 +14,12 @@ const ReviewModal = ({ isOpen, onClose, onSubmit, movie, existingReview = null }
             setRating(existingReview.rating || 0);
             setReviewText(existingReview.reviewText || '');
             setWatchDate(existingReview.watchDate || '');
+            setIsRewatch(existingReview.isRewatch || false);
         } else {
             setRating(0);
             setReviewText('');
             setWatchDate('');
+            setIsRewatch(false);
         }
     }, [existingReview, isOpen]);
 
@@ -34,6 +37,7 @@ const ReviewModal = ({ isOpen, onClose, onSubmit, movie, existingReview = null }
                 rating,
                 reviewText: reviewText.trim() || null,
                 watchDate: watchDate || null,
+                isRewatch,
             });
             onClose();
         } catch (error) {
@@ -95,6 +99,26 @@ const ReviewModal = ({ isOpen, onClose, onSubmit, movie, existingReview = null }
                                 onChange={(e) => setWatchDate(e.target.value)}
                                 max={new Date().toISOString().split('T')[0]}
                             />
+                        </div>
+
+                        <div className="form-group watch-type-group">
+                            <label>Watch type</label>
+                            <div className="watch-type-buttons">
+                                <button
+                                    type="button"
+                                    className={`watch-type-btn ${!isRewatch ? 'active' : ''}`}
+                                    onClick={() => setIsRewatch(false)}
+                                >
+                                    🎬 First Watch
+                                </button>
+                                <button
+                                    type="button"
+                                    className={`watch-type-btn ${isRewatch ? 'active' : ''}`}
+                                    onClick={() => setIsRewatch(true)}
+                                >
+                                    🔄 Rewatch
+                                </button>
+                            </div>
                         </div>
 
                         <div className="form-group">

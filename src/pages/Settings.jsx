@@ -12,7 +12,7 @@ const Settings = () => {
         emailNotifications: true,
         friendRequests: true,
         activityUpdates: false,
-        publicProfile: true // Default to public
+        privateProfile: false // Default to public (not private)
     });
 
     const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -28,7 +28,7 @@ const Settings = () => {
                     const userData = await getUser(currentUser.uid);
                     setSettings(prev => ({
                         ...prev,
-                        publicProfile: !userData.isPrivate // isPrivate=true means publicProfile=false
+                        privateProfile: userData.isPrivate ?? false // isPrivate=true means privateProfile=true
                     }));
                 } catch (err) {
                     console.error('Error fetching settings:', err);
@@ -47,10 +47,10 @@ const Settings = () => {
         }));
 
         // Persist to backend if it's the privacy setting
-        if (key === 'publicProfile') {
+        if (key === 'privateProfile') {
             try {
-                // publicProfile = true => isPrivate = false
-                await updateUserProfile(currentUser.uid, { isPrivate: !newValue });
+                // privateProfile = true => isPrivate = true
+                await updateUserProfile(currentUser.uid, { isPrivate: newValue });
             } catch (err) {
                 console.error('Error updating privacy setting:', err);
                 // Revert on failure
@@ -115,7 +115,7 @@ const Settings = () => {
                             </label>
                         </div>
 
-                        <div className="setting-item">
+                        <div className={`setting-item sub-setting ${!settings.emailNotifications ? 'disabled' : ''}`}>
                             <div className="setting-info">
                                 <h3 className="setting-label">Friend Requests</h3>
                                 <p className="setting-description">Get notified when someone sends you a friend request</p>
@@ -123,14 +123,15 @@ const Settings = () => {
                             <label className="toggle">
                                 <input
                                     type="checkbox"
-                                    checked={settings.friendRequests}
+                                    checked={settings.emailNotifications && settings.friendRequests}
                                     onChange={() => handleToggle('friendRequests')}
+                                    disabled={!settings.emailNotifications}
                                 />
                                 <span className="toggle-slider"></span>
                             </label>
                         </div>
 
-                        <div className="setting-item">
+                        <div className={`setting-item sub-setting ${!settings.emailNotifications ? 'disabled' : ''}`}>
                             <div className="setting-info">
                                 <h3 className="setting-label">Activity Updates</h3>
                                 <p className="setting-description">Receive updates when friends watch or review movies</p>
@@ -138,8 +139,9 @@ const Settings = () => {
                             <label className="toggle">
                                 <input
                                     type="checkbox"
-                                    checked={settings.activityUpdates}
+                                    checked={settings.emailNotifications && settings.activityUpdates}
                                     onChange={() => handleToggle('activityUpdates')}
+                                    disabled={!settings.emailNotifications}
                                 />
                                 <span className="toggle-slider"></span>
                             </label>
@@ -152,14 +154,14 @@ const Settings = () => {
                     <div className="settings-group">
                         <div className="setting-item">
                             <div className="setting-info">
-                                <h3 className="setting-label">Public Profile</h3>
-                                <p className="setting-description">Allow others to view your profile and activity</p>
+                                <h3 className="setting-label">Private Profile</h3>
+                                <p className="setting-description">Hide your profile and activity from others</p>
                             </div>
                             <label className="toggle">
                                 <input
                                     type="checkbox"
-                                    checked={settings.publicProfile}
-                                    onChange={() => handleToggle('publicProfile')}
+                                    checked={settings.privateProfile}
+                                    onChange={() => handleToggle('privateProfile')}
                                 />
                                 <span className="toggle-slider"></span>
                             </label>

@@ -44,6 +44,21 @@
     background: var(--color-bg-primary);
 }
 
+/* Sub-settings (nested under a parent setting) */
+.setting-item.sub-setting {
+    margin-left: var(--space-lg);
+    border-left: 2px solid var(--color-border);
+}
+
+.setting-item.sub-setting.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.setting-item.sub-setting.disabled .toggle-slider {
+    cursor: not-allowed;
+}
+
 .setting-info {
     flex: 1;
 }

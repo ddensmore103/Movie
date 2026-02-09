@@ -80,12 +80,20 @@
 }
 
 .activity-badge {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
     font-size: var(--font-size-xs);
     color: var(--color-primary);
     font-weight: 600;
     margin-bottom: var(--space-xs);
     text-transform: uppercase;
     letter-spacing: 0.5px;
+}
+
+.review-indicator {
+    font-size: var(--font-size-sm);
+    cursor: help;
 }
 
 .activity-movie-title {
