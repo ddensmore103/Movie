@@ -119,3 +119,30 @@
     text-align: center;
     color: var(--text-muted);
 }
+
+/* MOBILE-ONLY: User friends modal mobile styles */
+@media (max-width: 768px) {
+    .friends-modal-content {
+        max-width: 100%;
+        width: 100%;
+        max-height: 100vh;
+        border-radius: 0;
+    }
+
+    .friends-search-input {
+        font-size: 16px;
+        /* Prevents iOS zoom */
+        padding: 14px 12px;
+        min-height: 44px;
+    }
+
+    .friend-list-item {
+        padding: 14px 20px;
+        min-height: 60px;
+    }
+
+    .friend-action-btn {
+        padding: 10px 16px;
+        min-height: 44px;
+    }
+}

@@ -30,3 +30,17 @@
     opacity: 0.6;
     cursor: not-allowed;
 }
+
+/* MOBILE-ONLY: Confirmation modal mobile styles */
+@media (max-width: 768px) {
+    .confirmation-modal {
+        max-width: 100%;
+        width: 100%;
+        margin: var(--space-md);
+    }
+
+    .btn-danger {
+        min-height: 44px;
+        width: 100%;
+    }
+}

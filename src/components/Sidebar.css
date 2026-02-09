@@ -260,6 +260,17 @@
     .logo-icon {
         font-size: var(--font-size-2xl);
     }
+
+    /* MOBILE-ONLY: Hide mini sidebar - hamburger menu is sufficient */
+    .mini-sidebar {
+        display: none;
+    }
+
+    /* MOBILE-ONLY: Reposition hamburger for mobile */
+    .hamburger-btn {
+        left: var(--space-md);
+        top: var(--space-md);
+    }
 }
 
 /* Tablet */

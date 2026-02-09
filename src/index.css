@@ -440,6 +440,29 @@ a:hover {
     --space-xl: 1.5rem;
     --space-2xl: 2rem;
   }
+
+  /* MOBILE-ONLY: Smaller headings on phones */
+  h1 {
+    font-size: var(--font-size-2xl);
+  }
+
+  h2 {
+    font-size: var(--font-size-xl);
+  }
+
+  /* MOBILE-ONLY: Keep 2-column layout for grids on small phones */
+  .grid-2,
+  .grid-3,
+  .grid-4 {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-md);
+  }
+
+  /* MOBILE-ONLY: Larger touch targets for buttons */
+  .btn {
+    min-height: 44px;
+    padding: var(--space-md) var(--space-lg);
+  }
 }
 
 /* Loading States */

@@ -273,4 +273,37 @@
     .recent-movies {
         grid-template-columns: repeat(3, 1fr);
     }
+
+    /* MOBILE-ONLY: Full-width action buttons */
+    .profile-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .profile-actions .btn {
+        width: 100%;
+        min-height: 44px;
+    }
+
+    /* MOBILE-ONLY: 2-column activity grid */
+    .activity-feed {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--space-md);
+    }
+
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-sm);
+    }
+}
+
+@media (max-width: 480px) {
+    .profile-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .recent-movies {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }

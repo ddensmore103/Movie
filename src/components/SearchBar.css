@@ -141,6 +141,8 @@
 @media (max-width: 768px) {
     .search-container {
         max-width: 100%;
+        min-width: unset;
+        /* MOBILE-ONLY: Remove min-width constraint */
     }
 
     .search-bar {
@@ -149,6 +151,19 @@
     }
 
     .search-input {
-        font-size: var(--font-size-sm);
+        font-size: var(--font-size-base);
+        /* MOBILE-ONLY: Keep readable size */
+    }
+
+    /* MOBILE-ONLY: Larger touch target for clear button */
+    .search-clear {
+        width: 32px;
+        height: 32px;
+    }
+
+    /* MOBILE-ONLY: Larger tap targets for suggestions */
+    .suggestion-item {
+        padding: var(--space-md) var(--space-md);
+        min-height: 60px;
     }
 }

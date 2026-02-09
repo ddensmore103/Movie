@@ -49,6 +49,7 @@
     gap: var(--space-xl);
 }
 
+/* MOBILE-ONLY */
 @media (max-width: 768px) {
     .all-activity-page {
         padding: var(--space-xl) var(--space-md);
@@ -64,7 +65,20 @@
         font-size: var(--font-size-2xl);
     }
 
+    /* MOBILE-ONLY: 2-column activity grid */
     .activity-grid {
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--space-md);
+    }
+
+    .back-btn {
+        min-height: 44px;
+    }
+}
+
+@media (max-width: 480px) {
+    .activity-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--space-sm);
     }
 }

@@ -218,12 +218,36 @@
 }
 
 @media (max-width: 768px) {
+
+    /* MOBILE-ONLY: Full width select list modal */
     .select-list-modal {
-        max-width: 90vw;
-        max-height: 90vh;
+        max-width: 100%;
+        width: 100%;
+        max-height: 100vh;
+        border-radius: 0;
+    }
+
+    .select-list-modal .modal-body {
+        max-height: calc(100vh - 200px);
     }
 
     .lists-scroll {
-        max-height: 300px;
+        max-height: none;
+    }
+
+    /* MOBILE-ONLY: Larger touch targets */
+    .list-item {
+        padding: var(--space-md) var(--space-lg);
+        min-height: 60px;
+    }
+
+    .create-list-btn,
+    .add-selected-btn {
+        min-height: 44px;
+    }
+
+    .list-checkbox input[type="checkbox"] {
+        width: 24px;
+        height: 24px;
     }
 }

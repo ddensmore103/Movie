@@ -184,8 +184,38 @@
         gap: var(--space-md);
     }
 
+    /* MOBILE-ONLY: Let grid auto-fill down to 2-col on phones */
     .lists-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: var(--space-md);
+    }
+
+    /* MOBILE-ONLY: Always show list actions on mobile */
+    .list-actions {
+        opacity: 1;
+    }
+
+    .list-action-btn {
+        width: 40px;
+        height: 40px;
+    }
+
+    .list-card {
+        padding: var(--space-lg);
+    }
+
+    .list-emoji {
+        font-size: 2.5rem;
+    }
+
+    .list-name {
+        font-size: var(--font-size-lg);
+    }
+}
+
+@media (max-width: 480px) {
+    .lists-grid {
+        grid-template-columns: repeat(2, 1fr);
     }
 }
 

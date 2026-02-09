@@ -121,3 +121,46 @@
     border-color: transparent;
     color: white;
 }
+
+/* MOBILE-ONLY: Review modal mobile styles */
+@media (max-width: 768px) {
+    .review-modal {
+        max-width: 100%;
+        width: 100%;
+        border-radius: 0;
+        max-height: 100vh;
+    }
+
+    .review-movie-info {
+        padding: var(--space-sm);
+    }
+
+    .review-movie-poster {
+        width: 50px;
+        height: 75px;
+    }
+
+    .review-movie-info h3 {
+        font-size: var(--font-size-base);
+    }
+
+    .form-group input[type="date"],
+    .form-group textarea {
+        font-size: 16px;
+        /* Prevents iOS zoom on focus */
+        padding: var(--space-md);
+        min-height: 44px;
+    }
+
+    .form-group textarea {
+        min-height: 100px;
+    }
+
+    .watch-type-buttons {
+        flex-direction: column;
+    }
+
+    .watch-type-btn {
+        min-height: 44px;
+    }
+}
