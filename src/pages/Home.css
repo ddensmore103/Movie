@@ -101,37 +101,47 @@
 }
 
 @media (max-width: 768px) {
+
+    /* MOBILE-ONLY: Compact header - hamburger and search on same line */
     .sticky-search-container {
-        padding: var(--space-md);
+        padding: var(--space-sm) var(--space-md);
+        padding-left: 60px;
+        /* Leave space for hamburger button */
+        justify-content: flex-start;
     }
 
     .home-header {
-        padding: var(--space-xl) var(--space-md);
-        gap: var(--space-lg);
+        padding: var(--space-lg) var(--space-md);
+        padding-left: 60px;
+        /* Leave space for hamburger button */
+        gap: var(--space-md);
     }
 
     .page-title {
-        font-size: var(--font-size-2xl);
+        font-size: var(--font-size-xl);
+        margin: 0;
     }
 
     .page-subtitle {
-        font-size: var(--font-size-sm);
+        font-size: var(--font-size-xs);
+        display: none;
+        /* MOBILE-ONLY: Hide subtitle to save space */
     }
 
     .home-content {
-        padding: var(--space-xl) var(--space-md);
-        gap: var(--space-2xl);
+        padding: var(--space-lg) var(--space-md);
+        gap: var(--space-xl);
     }
 
     .section-header {
         flex-direction: column;
         align-items: flex-start;
         gap: var(--space-sm);
-        margin-bottom: var(--space-lg);
+        margin-bottom: var(--space-md);
     }
 
     .section-title {
-        font-size: var(--font-size-xl);
+        font-size: var(--font-size-lg);
     }
 
     /* MOBILE-ONLY: 2-column grids for movies and activity */

@@ -251,6 +251,10 @@
 @media (max-width: 768px) {
     .sidebar {
         box-shadow: var(--shadow-xl);
+        z-index: 200;
+        /* MOBILE-ONLY: Ensure sidebar is above overlay */
+        width: 280px;
+        /* MOBILE-ONLY: Wider sidebar for touch */
     }
 
     .sidebar-logo {
@@ -266,10 +270,18 @@
         display: none;
     }
 
-    /* MOBILE-ONLY: Reposition hamburger for mobile */
+    /* MOBILE-ONLY: Overlay should be below sidebar but above content */
+    .sidebar-overlay {
+        z-index: 150;
+    }
+
+    /* MOBILE-ONLY: Reposition hamburger for mobile - inline with search */
     .hamburger-btn {
+        position: fixed;
         left: var(--space-md);
         top: var(--space-md);
+        z-index: 50;
+        /* Below sidebar and overlay */
     }
 }
 
