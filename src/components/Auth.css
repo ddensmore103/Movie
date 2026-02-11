@@ -1,19 +1,36 @@
 .auth-container {
     min-height: 100vh;
     display: flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    padding: 20px;
+    align-items: stretch;
+    background: #0a0a1a;
+    overflow: hidden;
 }
 
+/* ===== Left Panel — Login Card ===== */
+
+.auth-left-panel {
+    width: 33.333%;
+    min-width: 380px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 100%);
+    position: relative;
+    z-index: 3;
+    flex-shrink: 0;
+    box-shadow: 4px 0 30px rgba(0, 0, 0, 0.5);
+}
+
+/* ===== Auth Card ===== */
+
 .auth-card {
-    background: white;
+    background: rgba(255, 255, 255, 0.97);
     border-radius: 16px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
     padding: 40px;
     width: 100%;
-    max-width: 420px;
+    max-width: 400px;
     animation: slideUp 0.4s ease-out;
 }
 
@@ -28,6 +45,87 @@
         transform: translateY(0);
     }
 }
+
+/* ===== Right Panel — Scrolling Posters ===== */
+
+.auth-poster-panel {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+}
+
+.auth-background {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    gap: 14px;
+    padding: 0 14px;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+.auth-background-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to right,
+            rgba(10, 10, 26, 0.6) 0%,
+            rgba(10, 10, 26, 0.2) 40%,
+            rgba(10, 10, 26, 0.15) 100%);
+    z-index: 2;
+    pointer-events: none;
+}
+
+.poster-column {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    flex-shrink: 0;
+    will-change: transform;
+}
+
+.poster-column.scroll-up {
+    animation: scrollUp 40s linear infinite;
+}
+
+.poster-column.scroll-down {
+    animation: scrollDown 40s linear infinite;
+}
+
+@keyframes scrollUp {
+    0% {
+        transform: translateY(0);
+    }
+
+    100% {
+        transform: translateY(calc(-50% - 7px));
+    }
+}
+
+@keyframes scrollDown {
+    0% {
+        transform: translateY(calc(-50% - 7px));
+    }
+
+    100% {
+        transform: translateY(0);
+    }
+}
+
+.poster-item {
+    flex-shrink: 0;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.poster-item img {
+    display: block;
+    width: 180px;
+    height: 270px;
+    object-fit: cover;
+}
+
+/* ===== Form Styles ===== */
 
 .auth-title {
     font-size: 32px;
@@ -323,4 +421,23 @@ input:-webkit-autofill:active {
     background: #f8f9ff;
     border-color: #764ba2;
     color: #764ba2;
+}
+
+/* ===== Responsive ===== */
+
+@media (max-width: 768px) {
+    .auth-container {
+        flex-direction: column;
+    }
+
+    .auth-left-panel {
+        width: 100%;
+        min-width: unset;
+        padding: 30px 20px;
+        box-shadow: none;
+    }
+
+    .auth-poster-panel {
+        display: none;
+    }
 }

@@ -1,7 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { signUpWithEmail, loginWithEmail, signInWithGoogle, sendEmailVerification, auth } from '../firebase';
+import { tmdbAPI, getImageUrl } from '../services/tmdb';
 import './Auth.css';
+
+const MOVIES_PER_COLUMN = 5;
+const NUM_COLUMNS = 7;
 
 /**
  * Authentication component with sign up, login, Google sign-in, and logout
@@ -16,6 +20,49 @@ const Auth = () => {
     const [error, setError] = useState(null);
     const [awaitingVerification, setAwaitingVerification] = useState(false);
     const [verificationEmail, setVerificationEmail] = useState('');
+    const [backgroundMovies, setBackgroundMovies] = useState([]);
+
+    /**
+     * Fetch trending movies for the scrolling poster background
+     */
+    useEffect(() => {
+        const fetchBackgroundMovies = async () => {
+            try {
+                // Fetch 2 pages of trending movies (40 total) to fill columns
+                const [page1, page2] = await Promise.all([
+                    tmdbAPI.getTrending('week', 1),
+                    tmdbAPI.getTrending('week', 2),
+                ]);
+                const allMovies = [
+                    ...(page1.results || []),
+                    ...(page2.results || []),
+                ].filter(m => m.poster_path); // only movies with posters
+
+                // Distribute into columns of 5
+                const columns = [];
+                for (let i = 0; i < NUM_COLUMNS; i++) {
+                    const start = i * MOVIES_PER_COLUMN;
+                    const col = allMovies.slice(start, start + MOVIES_PER_COLUMN);
+                    if (col.length > 0) columns.push(col);
+                }
+
+                // Reorder so most popular columns (lowest index) are in the center
+                const reordered = new Array(columns.length);
+                const mid = Math.floor(columns.length / 2);
+                for (let i = 0; i < columns.length; i++) {
+                    const offset = Math.floor((i + 1) / 2);
+                    const pos = i % 2 === 0 ? mid - offset : mid + offset;
+                    reordered[pos] = columns[i];
+                }
+
+                setBackgroundMovies(reordered.filter(Boolean));
+            } catch (err) {
+                console.error('Failed to load background movies:', err);
+            }
+        };
+
+        fetchBackgroundMovies();
+    }, []);
 
     /**
      * Handle email/password form submission
@@ -163,151 +210,180 @@ const Auth = () => {
 
     return (
         <div className="auth-container">
-            <div className="auth-card">
-                <h1 className="auth-title">Cinemarkd</h1>
+            {/* Left panel — Login form */}
+            <div className="auth-left-panel">
+                <div className="auth-card">
+                    <h1 className="auth-title">Cinemarkd</h1>
 
-                {awaitingVerification ? (
-                    <>
-                        <h2 className="auth-subtitle">Verify Your Email</h2>
+                    {awaitingVerification ? (
+                        <>
+                            <h2 className="auth-subtitle">Verify Your Email</h2>
 
-                        <div className="verification-message">
-                            <div className="verification-icon">📧</div>
-                            <p className="verification-text">
-                                We've sent a verification email to:
-                            </p>
-                            <p className="verification-email">{verificationEmail}</p>
-                            <p className="verification-instructions">
-                                Please check your inbox and click the verification link to activate your account.
-                            </p>
-                        </div>
-
-                        {error && (
-                            <div className={error.includes('sent') ? 'auth-success' : 'auth-error'}>
-                                {error.includes('sent') ? '✅' : '⚠️'} {error}
-                            </div>
-                        )}
-
-                        <button
-                            onClick={handleCheckVerification}
-                            className="auth-button primary"
-                            disabled={loading}
-                        >
-                            {loading ? 'Checking...' : "I've Verified My Email"}
-                        </button>
-
-                        <button
-                            onClick={handleResendVerification}
-                            className="auth-button secondary"
-                            disabled={loading}
-                        >
-                            {loading ? 'Sending...' : 'Resend Verification Email'}
-                        </button>
-
-                        <div className="auth-toggle">
-                            <button
-                                type="button"
-                                onClick={toggleMode}
-                                className="toggle-button"
-                                disabled={loading}
-                            >
-                                Back to Login
-                            </button>
-                        </div>
-                    </>
-                ) : (
-                    <>
-                        <h2 className="auth-subtitle">
-                            {isSignUp ? 'Create Account' : 'Welcome Back'}
-                        </h2>
-
-                        {error && (
-                            <div className="auth-error">
-                                ⚠️ {error}
-                            </div>
-                        )}
-
-                        <form onSubmit={handleEmailAuth} className="auth-form">
-                            <div className="form-group">
-                                <label htmlFor="email" className="form-label">Email</label>
-                                <input
-                                    id="email"
-                                    type="email"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    placeholder="your@email.com"
-                                    required
-                                    disabled={loading}
-                                />
+                            <div className="verification-message">
+                                <div className="verification-icon">📧</div>
+                                <p className="verification-text">
+                                    We've sent a verification email to:
+                                </p>
+                                <p className="verification-email">{verificationEmail}</p>
+                                <p className="verification-instructions">
+                                    Please check your inbox and click the verification link to activate your account.
+                                </p>
                             </div>
 
-                            <div className="form-group">
-                                <label htmlFor="password" className="form-label">Password</label>
-                                <div className="password-input-wrapper">
-                                    <input
-                                        id="password"
-                                        type={showPassword ? "text" : "password"}
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        placeholder="••••••••"
-                                        required
-                                        minLength={6}
-                                        disabled={loading}
-                                    />
-                                    <button
-                                        type="button"
-                                        className="password-toggle"
-                                        onMouseDown={() => setShowPassword(true)}
-                                        onMouseUp={() => setShowPassword(false)}
-                                        onMouseLeave={() => setShowPassword(false)}
-                                        onTouchStart={() => setShowPassword(true)}
-                                        onTouchEnd={() => setShowPassword(false)}
-                                        disabled={loading}
-                                        aria-label="Toggle password visibility"
-                                    >
-                                        {showPassword ? '👁️' : '👁️‍🗨️'}
-                                    </button>
+                            {error && (
+                                <div className={error.includes('sent') ? 'auth-success' : 'auth-error'}>
+                                    {error.includes('sent') ? '✅' : '⚠️'} {error}
                                 </div>
-                            </div>
+                            )}
 
                             <button
-                                type="submit"
+                                onClick={handleCheckVerification}
                                 className="auth-button primary"
                                 disabled={loading}
                             >
-                                {loading ? 'Please wait...' : (isSignUp ? 'Sign Up' : 'Log In')}
+                                {loading ? 'Checking...' : "I've Verified My Email"}
                             </button>
-                        </form>
 
-                        <div className="auth-divider">
-                            <span>OR</span>
-                        </div>
-
-                        <button
-                            onClick={handleGoogleSignIn}
-                            className="auth-button google"
-                            disabled={loading}
-                        >
-                            <svg className="google-icon" viewBox="0 0 24 24">
-                                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
-                                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-                            </svg>
-                            Sign in with Google
-                        </button>
-
-                        <div className="auth-toggle">
-                            {isSignUp ? 'Already have an account?' : "Don't have an account?"}
                             <button
-                                type="button"
-                                onClick={toggleMode}
-                                className="toggle-button"
+                                onClick={handleResendVerification}
+                                className="auth-button secondary"
                                 disabled={loading}
                             >
-                                {isSignUp ? 'Log In' : 'Sign Up'}
+                                {loading ? 'Sending...' : 'Resend Verification Email'}
                             </button>
-                        </div>
-                    </>
+
+                            <div className="auth-toggle">
+                                <button
+                                    type="button"
+                                    onClick={toggleMode}
+                                    className="toggle-button"
+                                    disabled={loading}
+                                >
+                                    Back to Login
+                                </button>
+                            </div>
+                        </>
+                    ) : (
+                        <>
+                            <h2 className="auth-subtitle">
+                                {isSignUp ? 'Create Account' : 'Welcome Back'}
+                            </h2>
+
+                            {error && (
+                                <div className="auth-error">
+                                    ⚠️ {error}
+                                </div>
+                            )}
+
+                            <form onSubmit={handleEmailAuth} className="auth-form">
+                                <div className="form-group">
+                                    <label htmlFor="email" className="form-label">Email</label>
+                                    <input
+                                        id="email"
+                                        type="email"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        placeholder="your@email.com"
+                                        required
+                                        disabled={loading}
+                                    />
+                                </div>
+
+                                <div className="form-group">
+                                    <label htmlFor="password" className="form-label">Password</label>
+                                    <div className="password-input-wrapper">
+                                        <input
+                                            id="password"
+                                            type={showPassword ? "text" : "password"}
+                                            value={password}
+                                            onChange={(e) => setPassword(e.target.value)}
+                                            placeholder="••••••••"
+                                            required
+                                            minLength={6}
+                                            disabled={loading}
+                                        />
+                                        <button
+                                            type="button"
+                                            className="password-toggle"
+                                            onMouseDown={() => setShowPassword(true)}
+                                            onMouseUp={() => setShowPassword(false)}
+                                            onMouseLeave={() => setShowPassword(false)}
+                                            onTouchStart={() => setShowPassword(true)}
+                                            onTouchEnd={() => setShowPassword(false)}
+                                            disabled={loading}
+                                            aria-label="Toggle password visibility"
+                                        >
+                                            {showPassword ? '👁️' : '👁️‍🗨️'}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <button
+                                    type="submit"
+                                    className="auth-button primary"
+                                    disabled={loading}
+                                >
+                                    {loading ? 'Please wait...' : (isSignUp ? 'Sign Up' : 'Log In')}
+                                </button>
+                            </form>
+
+                            <div className="auth-divider">
+                                <span>OR</span>
+                            </div>
+
+                            <button
+                                onClick={handleGoogleSignIn}
+                                className="auth-button google"
+                                disabled={loading}
+                            >
+                                <svg className="google-icon" viewBox="0 0 24 24">
+                                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                                </svg>
+                                Sign in with Google
+                            </button>
+
+                            <div className="auth-toggle">
+                                {isSignUp ? 'Already have an account?' : "Don't have an account?"}
+                                <button
+                                    type="button"
+                                    onClick={toggleMode}
+                                    className="toggle-button"
+                                    disabled={loading}
+                                >
+                                    {isSignUp ? 'Log In' : 'Sign Up'}
+                                </button>
+                            </div>
+                        </>
+                    )}
+                </div>
+            </div>
+
+            {/* Right panel — Scrolling movie posters */}
+            <div className="auth-poster-panel">
+                {backgroundMovies.length > 0 && (
+                    <div className="auth-background">
+                        {backgroundMovies.map((column, colIndex) => (
+                            <div
+                                className={`poster-column ${colIndex % 2 === 0 ? 'scroll-up' : 'scroll-down'}`}
+                                key={colIndex}
+                            >
+                                {/* Duplicate posters for seamless infinite loop */}
+                                {[...column, ...column].map((movie, j) => (
+                                    <div className="poster-item" key={`${colIndex}-${j}`}>
+                                        <img
+                                            src={getImageUrl(movie.poster_path, 'medium')}
+                                            alt={movie.title}
+                                            loading="lazy"
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                        ))}
+                        <div className="auth-background-overlay" />
+                    </div>
                 )}
             </div>
         </div>
