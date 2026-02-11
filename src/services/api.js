@@ -2,6 +2,7 @@
  * API Service Layer
  * Centralizes all backend API calls and automatically attaches Firebase auth tokens
  */
+import { tmdbAPI } from './tmdb';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
@@ -429,6 +430,67 @@ export const getUserFriends = async (userId) => {
  */
 export const getActivityFeed = async () => {
     return apiFetch('/activity/feed');
+};
+
+/**
+ * Get personalized movie recommendations based on user's review history
+ * Fetches user's highest-rated movies and uses TMDB recommendations API
+ * @returns {Promise<Array>} Array of recommended TMDB movie objects
+ */
+export const getRecommendedMovies = async () => {
+    try {
+        // Get user's reviews sorted by the backend (most recent first)
+        const reviews = await getMyReviews();
+
+        if (!reviews || reviews.length === 0) {
+            return [];
+        }
+
+        // Sort by rating (highest first), then by recency for ties
+        const sortedReviews = [...reviews]
+            .filter(r => r.tmdbId)
+            .sort((a, b) => {
+                const ratingDiff = (b.rating || 0) - (a.rating || 0);
+                if (ratingDiff !== 0) return ratingDiff;
+                return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+            });
+
+        // Take top 5 highest-rated movies to seed recommendations
+        const seedMovies = sortedReviews.slice(0, 5);
+        const reviewedTmdbIds = new Set(sortedReviews.map(r => String(r.tmdbId)));
+
+        // Fetch TMDB recommendations for each seed movie in parallel
+        const recommendationResults = await Promise.allSettled(
+            seedMovies.map(review =>
+                tmdbAPI.getMovieDetails(review.tmdbId)
+            )
+        );
+
+        // Collect and deduplicate recommendations
+        const seenIds = new Set();
+        const allRecommendations = [];
+
+        for (const result of recommendationResults) {
+            if (result.status === 'fulfilled' && result.value?.recommendations?.results) {
+                for (const movie of result.value.recommendations.results) {
+                    const movieIdStr = String(movie.id);
+                    // Skip if already reviewed or already in recommendations
+                    if (!reviewedTmdbIds.has(movieIdStr) && !seenIds.has(movieIdStr)) {
+                        seenIds.add(movieIdStr);
+                        allRecommendations.push(movie);
+                    }
+                }
+            }
+        }
+
+        // Return up to 20 recommendations, sorted by TMDB popularity
+        return allRecommendations
+            .sort((a, b) => (b.popularity || 0) - (a.popularity || 0))
+            .slice(0, 20);
+    } catch (error) {
+        console.error('Error getting recommendations:', error);
+        return [];
+    }
 };
 
 /**

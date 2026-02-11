@@ -2,13 +2,15 @@ import { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../contexts/AuthContext';
 import UserSearchBar from '../components/UserSearchBar';
+import ActivityCard from '../components/ActivityCard';
 import {
     sendFriendRequest,
     getPendingFriendRequests,
     getSentFriendRequests,
     acceptFriendRequest,
     rejectFriendRequest,
-    getFriends
+    getFriends,
+    getActivityFeed
 } from '../services/api';
 import './Friends.css';
 import UserAvatar from '../components/UserAvatar';
@@ -23,6 +25,8 @@ const Friends = () => {
     const [sentRequests, setSentRequests] = useState(new Set());
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [recentActivity, setRecentActivity] = useState([]);
+    const [activityLoading, setActivityLoading] = useState(true);
 
     // Load friends and pending requests
     useEffect(() => {
@@ -49,10 +53,21 @@ const Friends = () => {
         } finally {
             setLoading(false);
         }
+
+        // Fetch activity feed
+        try {
+            setActivityLoading(true);
+            const activityData = await getActivityFeed();
+            setRecentActivity(activityData);
+        } catch (err) {
+            console.error('Error loading activity feed:', err);
+            setRecentActivity([]);
+        } finally {
+            setActivityLoading(false);
+        }
     };
 
     const handleUserSelect = (user) => {
-        // Add to search results if not already there
         if (!searchResults.find(u => u.userId === user.userId)) {
             setSearchResults([user, ...searchResults]);
         }
@@ -71,7 +86,6 @@ const Friends = () => {
     const handleAcceptRequest = async (requestId) => {
         try {
             await acceptFriendRequest(requestId);
-            // Reload friends data to update both lists
             await loadFriendsData();
         } catch (err) {
             console.error('Error accepting friend request:', err);
@@ -82,7 +96,6 @@ const Friends = () => {
     const handleRejectRequest = async (requestId) => {
         try {
             await rejectFriendRequest(requestId);
-            // Remove from pending requests
             setPendingRequests(pendingRequests.filter(req => req.requestId !== requestId));
         } catch (err) {
             console.error('Error rejecting friend request:', err);
@@ -90,7 +103,13 @@ const Friends = () => {
         }
     };
 
-    // Get list of user IDs to exclude from search (current user + existing friends)
+    const handleActivityClick = (activity) => {
+        if (activity.tmdbId) {
+            navigate(`/movie/${activity.tmdbId}`);
+        }
+    };
+
+    // Get list of user IDs to exclude from search
     const excludeUserIds = [
         currentUser?.uid,
         ...friends.map(f => f.userId)
@@ -158,8 +177,6 @@ const Friends = () => {
                     </div>
                 </section>
             )}
-
-
 
             {/* Friends List Section */}
             <section className="friends-section">
@@ -261,6 +278,47 @@ const Friends = () => {
                 </section>
             )}
 
+            {/* Recent Activity Section */}
+            <section className="friends-activity-section">
+                <div className="section-header">
+                    <h2 className="section-title">Recent Activity</h2>
+                    <button className="section-link" onClick={() => navigate('/activity')}>
+                        View All →
+                    </button>
+                </div>
+                {activityLoading ? (
+                    <div className="friends-activity-feed">
+                        <p style={{ textAlign: 'center', padding: '40px', color: 'var(--color-secondary)' }}>
+                            Loading activity...
+                        </p>
+                    </div>
+                ) : recentActivity.length > 0 ? (
+                    <div className="friends-activity-feed">
+                        {recentActivity.map((activity) => (
+                            <ActivityCard
+                                key={activity.reviewId || activity.id}
+                                activity={activity}
+                                onClick={() => handleActivityClick(activity)}
+                            />
+                        ))}
+                    </div>
+                ) : (
+                    <div className="friends-activity-feed" style={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        minHeight: '200px'
+                    }}>
+                        <p style={{
+                            textAlign: 'center',
+                            color: 'var(--color-secondary)',
+                            fontSize: '1.2rem'
+                        }}>
+                            No recent activity, go watch some movies!
+                        </p>
+                    </div>
+                )}
+            </section>
 
         </div>
     );

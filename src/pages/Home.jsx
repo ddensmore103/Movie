@@ -1,29 +1,29 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import SearchBar from '../components/SearchBar';
-import ActivityCard from '../components/ActivityCard';
 import MovieCard from '../components/MovieCard';
 import SelectListModal from '../components/SelectListModal';
 import { tmdbAPI, mockMovies } from '../services/tmdb';
-import { getActivityFeed } from '../services/api';
+import { getRecommendedMovies } from '../services/api';
 import './Home.css';
+
+const VISIBLE_RECOMMENDATIONS_COUNT = 10; // ~2 rows on desktop
 
 const Home = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const [recentActivity, setRecentActivity] = useState([]);
-    const [recommendedMovies, setRecommendedMovies] = useState([]);
+    const [trendingMovies, setTrendingMovies] = useState([]);
+    const [personalRecommendations, setPersonalRecommendations] = useState([]);
     const [searchResults, setSearchResults] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [isSearching, setIsSearching] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-    const [activityLoading, setActivityLoading] = useState(true);
+    const [recsLoading, setRecsLoading] = useState(true);
     const [resetTrigger, setResetTrigger] = useState(0);
     const [showSelectListModal, setShowSelectListModal] = useState(false);
     const [selectedMovie, setSelectedMovie] = useState(null);
 
     useEffect(() => {
-        // Load initial data
         loadInitialData();
     }, []);
 
@@ -39,22 +39,22 @@ const Home = () => {
         try {
             // Try to fetch trending movies from TMDB
             const trendingData = await tmdbAPI.getTrending('week', 1);
-            setRecommendedMovies(trendingData.results || mockMovies);
+            setTrendingMovies(trendingData.results || mockMovies);
         } catch (error) {
             console.error('Error loading trending movies, using mock data:', error);
-            setRecommendedMovies(mockMovies);
+            setTrendingMovies(mockMovies);
         }
 
-        // Fetch real activity feed
+        // Fetch personalized recommendations
         try {
-            setActivityLoading(true);
-            const activityData = await getActivityFeed();
-            setRecentActivity(activityData);
+            setRecsLoading(true);
+            const recs = await getRecommendedMovies();
+            setPersonalRecommendations(recs);
         } catch (error) {
-            console.error('Error loading activity feed:', error);
-            setRecentActivity([]);
+            console.error('Error loading recommendations:', error);
+            setPersonalRecommendations([]);
         } finally {
-            setActivityLoading(false);
+            setRecsLoading(false);
         }
 
         setIsLoading(false);
@@ -64,7 +64,7 @@ const Home = () => {
         setIsSearching(false);
         setSearchResults([]);
         setSearchQuery('');
-        setResetTrigger(prev => prev + 1); // Trigger SearchBar reset
+        setResetTrigger(prev => prev + 1);
     };
 
     const handleSearch = async (query) => {
@@ -85,17 +85,10 @@ const Home = () => {
         }
     };
 
-    // Add navigate function to search handler
     handleSearch.navigate = navigate;
 
     const handleMovieClick = (movie) => {
         navigate(`/movie/${movie.id}`);
-    };
-
-    const handleActivityClick = (activity) => {
-        if (activity.tmdbId) {
-            navigate(`/movie/${activity.tmdbId}`);
-        }
     };
 
     const handleAddToList = (movie) => {
@@ -108,7 +101,7 @@ const Home = () => {
         setSelectedMovie(null);
     };
 
-    const displayedMovies = isSearching ? searchResults : recommendedMovies;
+    const displayedMovies = isSearching ? searchResults : trendingMovies;
     const sectionTitle = isSearching
         ? `Search Results for "${searchQuery}"`
         : 'Trending This Week';
@@ -121,41 +114,34 @@ const Home = () => {
             </div>
 
             <div className="home-content">
-                {/* Only show activity section when not searching */}
+                {/* Recommended For You Section - only when not searching */}
                 {!isSearching && (
-                    <section className="activity-section">
+                    <section className="recommended-section">
                         <div className="section-header">
-                            <h2 className="section-title">Recent Activity</h2>
-                            <button className="section-link" onClick={() => navigate('/activity')}>
-                                View All →
-                            </button>
+                            <h2 className="section-title">Recommended For You</h2>
+                            {personalRecommendations.length > VISIBLE_RECOMMENDATIONS_COUNT && (
+                                <button className="section-link" onClick={() => navigate('/recommendations')}>
+                                    See More →
+                                </button>
+                            )}
                         </div>
-                        {activityLoading ? (
-                            <div className="activity-feed">
-                                <p style={{ textAlign: 'center', padding: '40px', color: 'var(--color-secondary)' }}>
-                                    Loading activity...
-                                </p>
-                            </div>
-                        ) : recentActivity.length > 0 ? (
-                            <div className="activity-feed">
-                                {recentActivity.map((activity) => (
-                                    <ActivityCard key={activity.reviewId || activity.id} activity={activity} />
+                        {recsLoading ? (
+                            <div className="loading-message">Finding movies you'll love...</div>
+                        ) : personalRecommendations.length > 0 ? (
+                            <div className="movies-grid">
+                                {personalRecommendations.slice(0, VISIBLE_RECOMMENDATIONS_COUNT).map((movie) => (
+                                    <MovieCard
+                                        key={movie.id}
+                                        movie={movie}
+                                        onClick={() => handleMovieClick(movie)}
+                                        onAddToList={handleAddToList}
+                                    />
                                 ))}
                             </div>
                         ) : (
-                            <div className="activity-feed" style={{
-                                display: 'flex',
-                                justifyContent: 'center',
-                                alignItems: 'center',
-                                minHeight: '200px'
-                            }}>
-                                <p style={{
-                                    textAlign: 'center',
-                                    color: 'var(--color-secondary)',
-                                    fontSize: '1.2rem'
-                                }}>
-                                    No recent activity, go watch some movies!
-                                </p>
+                            <div className="recommendations-empty">
+                                <div className="recommendations-empty-icon">🎬</div>
+                                <p>Watch and rate some movies to get personalized recommendations!</p>
                             </div>
                         )}
                     </section>
@@ -216,4 +202,3 @@ const Home = () => {
 };
 
 export default Home;
-
