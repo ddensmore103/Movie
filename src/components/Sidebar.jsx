@@ -61,8 +61,8 @@ const Sidebar = () => {
                 {/* Header - only visible when expanded */}
                 <div className="sidebar-header">
                     <h1 className="sidebar-logo">
-                        <span className="logo-icon">🎬</span>
-                        <span className="logo-text">Cinemarkd</span>
+                        <img src="/favicon.png" alt="C" className="sidebar-logo-img" />
+                        <span className="logo-text">inemarkd</span>
                     </h1>
                 </div>
 

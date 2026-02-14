@@ -213,7 +213,7 @@ const Auth = () => {
             {/* Left panel — Login form */}
             <div className="auth-left-panel">
                 <div className="auth-card">
-                    <h1 className="auth-title">Cinemarkd</h1>
+                    <h1 className="auth-title"><img src="/favicon.png" alt="C" className="auth-logo" />inemarkd</h1>
 
                     {awaitingVerification ? (
                         <>
