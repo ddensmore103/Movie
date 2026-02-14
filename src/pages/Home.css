@@ -11,11 +11,30 @@
     z-index: 40;
     background: var(--color-bg-primary);
     border-bottom: 1px solid var(--color-border);
-    padding: var(--space-xl) var(--space-md);
+    padding: var(--space-md) var(--space-xl);
     display: flex;
+    align-items: center;
     justify-content: center;
     backdrop-filter: blur(10px);
     background: rgba(17, 24, 39, 0.95);
+}
+
+.home-logo {
+    position: fixed;
+    top: var(--space-md);
+    right: var(--space-lg);
+    width: 55px;
+    height: 55px;
+    object-fit: contain;
+    cursor: pointer;
+    transition: transform var(--transition-fast), opacity var(--transition-fast);
+    z-index: 45;
+    border-radius: var(--radius-md);
+}
+
+.home-logo:hover {
+    transform: scale(1.1);
+    opacity: 0.9;
 }
 
 .header-content {

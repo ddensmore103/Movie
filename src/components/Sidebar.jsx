@@ -27,7 +27,7 @@ const Sidebar = () => {
         navigate('/'); // Redirect to home page
     };
 
-    const { currentUser } = useAuth(); // Create this context hook
+    const { currentUser } = useAuth();
 
     // Add Admin link if user is admin
     const isAdmin = currentUser?.email === 'dldensmore1@gmail.com';
@@ -37,7 +37,7 @@ const Sidebar = () => {
 
     return (
         <>
-            {/* Mobile Hamburger Button */}
+            {/* Hamburger Button */}
             <button
                 className="hamburger-btn"
                 onClick={toggleSidebar}
@@ -48,7 +48,7 @@ const Sidebar = () => {
                 <span></span>
             </button>
 
-            {/* Overlay for mobile */}
+            {/* Overlay for blur backdrop when expanded */}
             {isOpen && (
                 <div
                     className="sidebar-overlay open"
@@ -56,45 +56,9 @@ const Sidebar = () => {
                 ></div>
             )}
 
-            {/* Mini Sidebar (Icon Only - Always Visible) */}
-            {!isOpen && (
-                <div className="mini-sidebar">
-                    {displayedNavItems.map((item) => (
-                        <Link
-                            key={item.path}
-                            to={item.path}
-                            state={item.path === '/' ? { resetSearch: true } : undefined}
-                            className={`mini-nav-item ${location.pathname === item.path ? 'active' : ''}`}
-                            data-label={item.label}
-                        >
-                            {item.icon}
-                        </Link>
-                    ))}
-                    <button
-                        className="mini-nav-item"
-                        onClick={handleLogout}
-                        data-label="Logout"
-                        style={{
-                            marginTop: 'auto',
-                            background: 'transparent',
-                            border: 'none',
-                            width: '50px',
-                            height: '50px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: 'var(--font-size-2xl)',
-                            color: 'var(--color-text-secondary)'
-                        }}
-                        aria-label="Logout"
-                    >
-                        <FiLogOut />
-                    </button>
-                </div>
-            )}
-
-            {/* Sidebar */}
-            <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
+            {/* Single Sidebar - expands in place */}
+            <aside className={`sidebar ${isOpen ? 'expanded' : 'collapsed'}`}>
+                {/* Header - only visible when expanded */}
                 <div className="sidebar-header">
                     <h1 className="sidebar-logo">
                         <span className="logo-icon">🎬</span>
@@ -110,6 +74,7 @@ const Sidebar = () => {
                             state={item.path === '/' ? { resetSearch: true } : undefined}
                             className={`nav-item ${location.pathname === item.path ? 'active' : ''}`}
                             onClick={() => setIsOpen(false)}
+                            data-label={item.label}
                         >
                             <span className="nav-icon">{item.icon}</span>
                             <span className="nav-label">{item.label}</span>

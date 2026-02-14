@@ -111,6 +111,7 @@ const Home = () => {
             {/* Sticky Search Bar */}
             <div className="sticky-search-container">
                 <SearchBar onSearch={handleSearch} resetTrigger={resetTrigger} />
+                <img src="/logo.png" alt="MovieTrack Logo" className="home-logo" onClick={() => navigate('/')} />
             </div>
 
             <div className="home-content">
