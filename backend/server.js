@@ -26,7 +26,7 @@ app.use(cors({
     origin: [
         'http://localhost:5173',                        // Local development
         'http://localhost:3000',                        // Alternative local port
-        'https://movieapp-ten-lovat.vercel.app'         // ✅ Your Vercel URL (no trailing slash!)
+        'https://cinemarkd.vercel.app'                  // ✅ Your Vercel URL (no trailing slash!)
     ],
     credentials: true
 }));
