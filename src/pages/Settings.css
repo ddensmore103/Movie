@@ -40,8 +40,10 @@
     transition: all var(--transition-fast);
 }
 
-.setting-item:hover {
-    background: var(--color-bg-primary);
+@media (hover: hover) {
+    .setting-item:hover {
+        background: var(--color-bg-primary);
+    }
 }
 
 /* Sub-settings (nested under a parent setting) */
@@ -124,8 +126,10 @@
     transform: translateX(24px);
 }
 
-.toggle:hover .toggle-slider {
-    opacity: 0.9;
+@media (hover: hover) {
+    .toggle:hover .toggle-slider {
+        opacity: 0.9;
+    }
 }
 
 /* Danger Button */
@@ -142,16 +146,24 @@
     font-family: var(--font-family);
 }
 
-.btn-danger:hover {
-    background: var(--color-error);
-    color: white;
-    transform: translateY(-1px);
-    box-shadow: var(--shadow-md);
+@media (hover: hover) {
+    .btn-danger:hover {
+        background: var(--color-error);
+        color: white;
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-md);
+    }
 }
 
 @media (max-width: 768px) {
     .settings-page {
         padding: var(--space-xl) var(--space-md);
+    }
+
+    .settings-page .page-header .page-title,
+    .settings-page .page-title {
+        text-align: center;
+        width: 100%;
     }
 
     .setting-item {

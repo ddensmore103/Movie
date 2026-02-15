@@ -32,9 +32,11 @@
     border-radius: var(--radius-md);
 }
 
-.home-logo:hover {
-    transform: scale(1.1);
-    opacity: 0.9;
+@media (hover: hover) {
+    .home-logo:hover {
+        transform: scale(1.1);
+        opacity: 0.9;
+    }
 }
 
 .header-content {
@@ -94,10 +96,12 @@
     border-radius: var(--radius-md);
 }
 
-.section-link:hover {
-    background: var(--color-bg-tertiary);
-    color: var(--color-primary-light);
-    transform: translateX(4px);
+@media (hover: hover) {
+    .section-link:hover {
+        background: var(--color-bg-tertiary);
+        color: var(--color-primary-light);
+        transform: translateX(4px);
+    }
 }
 
 /* Recommendations Empty State */
@@ -135,24 +139,40 @@
 
 @media (max-width: 768px) {
 
-    /* MOBILE-ONLY: Compact header - hamburger and search on same line */
+    /* MOBILE-ONLY: Proper row layout — hamburger | search | logo */
     .sticky-search-container {
         padding: var(--space-sm) var(--space-md);
-        padding-left: 60px;
-        /* Leave space for hamburger button */
-        justify-content: flex-start;
+        padding-left: 48px;
+        /* Space for fixed hamburger button */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--space-sm);
+    }
+
+    /* MOBILE-ONLY: Let search bar fill available space between hamburger and logo */
+    .sticky-search-container .search-container {
+        flex: 1;
+        min-width: 0;
+    }
+
+    /* MOBILE-ONLY: Inline logo on mobile header */
+    .home-logo {
+        position: static;
+        width: 36px;
+        height: 36px;
+        flex-shrink: 0;
     }
 
     .home-header {
         padding: var(--space-lg) var(--space-md);
-        padding-left: 60px;
-        /* Leave space for hamburger button */
         gap: var(--space-md);
     }
 
     .page-title {
         font-size: var(--font-size-xl);
         margin: 0;
+        text-align: center;
     }
 
     .page-subtitle {
@@ -168,13 +188,14 @@
 
     .section-header {
         flex-direction: column;
-        align-items: flex-start;
+        align-items: center;
         gap: var(--space-sm);
         margin-bottom: var(--space-md);
     }
 
     .section-title {
         font-size: var(--font-size-lg);
+        text-align: center;
     }
 
     /* MOBILE-ONLY: 2-column grids for movies */

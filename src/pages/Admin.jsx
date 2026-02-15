@@ -87,9 +87,9 @@ const Admin = () => {
                                             {user.username}
                                         </Link>
                                     </td>
-                                    <td>{user.email}</td>
-                                    <td className="monospace">{user.userId}</td>
-                                    <td>{new Date(user.createdAt).toLocaleDateString()}</td>
+                                    <td data-label="Email">{user.email}</td>
+                                    <td className="monospace" data-label="User ID">{user.userId}</td>
+                                    <td data-label="Joined">{new Date(user.createdAt).toLocaleDateString()}</td>
                                     <td>
                                         {user.email === 'dldensmore1@gmail.com' ? (
                                             <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.9em', fontStyle: 'italic' }}>

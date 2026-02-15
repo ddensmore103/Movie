@@ -40,6 +40,11 @@
         padding: var(--space-xl) var(--space-md);
     }
 
+    .all-movies-page .page-title {
+        text-align: center;
+        width: 100%;
+    }
+
     .movies-grid-large {
         grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
         gap: var(--space-md);

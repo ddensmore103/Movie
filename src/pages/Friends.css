@@ -89,9 +89,11 @@
     transition: all var(--transition-base);
 }
 
-.user-result-card:hover {
-    border-color: var(--color-primary);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+@media (hover: hover) {
+    .user-result-card:hover {
+        border-color: var(--color-primary);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
 }
 
 .user-result-card .user-avatar {
@@ -219,10 +221,12 @@
     transition: all var(--transition-base);
 }
 
-.friend-card:hover {
-    transform: translateY(-4px);
-    border-color: var(--color-border-light);
-    box-shadow: var(--shadow-lg);
+@media (hover: hover) {
+    .friend-card:hover {
+        transform: translateY(-4px);
+        border-color: var(--color-border-light);
+        box-shadow: var(--shadow-lg);
+    }
 }
 
 .friend-card .friend-avatar {
@@ -267,8 +271,13 @@
 
     .page-header {
         flex-direction: column;
-        align-items: flex-start;
+        align-items: center;
         gap: var(--space-md);
+    }
+
+    .page-header .page-title {
+        text-align: center;
+        width: 100%;
     }
 
     .header-search {
@@ -311,9 +320,11 @@
     transition: color 0.2s;
 }
 
-.clickable-name:hover {
-    color: var(--color-primary);
-    text-decoration: underline;
+@media (hover: hover) {
+    .clickable-name:hover {
+        color: var(--color-primary);
+        text-decoration: underline;
+    }
 }
 
 /* Activity Section on Friends Page */
@@ -343,10 +354,12 @@
     border-radius: var(--radius-md);
 }
 
-.friends-activity-section .section-link:hover {
-    background: var(--color-bg-tertiary);
-    color: var(--color-primary-light);
-    transform: translateX(4px);
+@media (hover: hover) {
+    .friends-activity-section .section-link:hover {
+        background: var(--color-bg-tertiary);
+        color: var(--color-primary-light);
+        transform: translateX(4px);
+    }
 }
 
 .friends-activity-feed {

@@ -102,9 +102,11 @@
     transition: all var(--transition-base);
 }
 
-.btn-delete-user:hover {
-    background: rgba(231, 76, 60, 0.2);
-    transform: translateY(-1px);
+@media (hover: hover) {
+    .btn-delete-user:hover {
+        background: rgba(231, 76, 60, 0.2);
+        transform: translateY(-1px);
+    }
 }
 
 .confirm-actions {
@@ -138,7 +140,132 @@
     transition: color var(--transition-base);
 }
 
-.admin-user-link:hover {
-    color: var(--color-primary);
-    text-decoration: underline;
+@media (hover: hover) {
+    .admin-user-link:hover {
+        color: var(--color-primary);
+        text-decoration: underline;
+    }
+}
+
+@media (max-width: 768px) {
+    .admin-page {
+        padding: var(--space-xl) var(--space-md);
+    }
+
+    .admin-page .page-title {
+        text-align: center;
+        width: 100%;
+    }
+
+    /* MOBILE-ONLY: Full-width stat card */
+    .admin-stats {
+        display: flex;
+        justify-content: center;
+    }
+
+    .admin-stats .stat-card {
+        width: 100%;
+        text-align: center;
+        display: block;
+        min-width: unset;
+    }
+
+    /* MOBILE-ONLY: Convert table to stacked cards */
+    .users-table-container {
+        background: transparent;
+        border: none;
+        overflow-x: visible;
+    }
+
+    .users-table {
+        min-width: unset;
+        width: 100%;
+    }
+
+    .users-table thead {
+        display: none;
+    }
+
+    .users-table tbody {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-md);
+    }
+
+    .users-table tr {
+        display: flex;
+        flex-direction: column;
+        background: var(--color-bg-secondary);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-lg);
+        padding: var(--space-lg);
+        gap: var(--space-sm);
+    }
+
+    .users-table td {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: var(--space-xs) 0;
+        border-bottom: 1px solid var(--color-border);
+        font-size: var(--font-size-sm);
+    }
+
+    .users-table td:last-child {
+        border-bottom: none;
+        padding-top: var(--space-sm);
+        justify-content: center;
+    }
+
+    /* MOBILE-ONLY: Label each field */
+    .users-table td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: var(--color-text-secondary);
+        font-size: var(--font-size-xs);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        flex-shrink: 0;
+        margin-right: var(--space-md);
+    }
+
+    /* MOBILE-ONLY: User cell is the card header */
+    .users-table td.user-cell {
+        border-bottom: 1px solid var(--color-border);
+        padding-bottom: var(--space-md);
+        justify-content: flex-start;
+    }
+
+    .users-table td.user-cell::before {
+        display: none;
+    }
+
+    /* MOBILE-ONLY: Monospace IDs wrap */
+    .users-table .monospace {
+        font-size: var(--font-size-xs);
+        word-break: break-all;
+        text-align: right;
+    }
+
+    /* MOBILE-ONLY: Bigger touch targets for action buttons */
+    .btn-delete-user {
+        width: 100%;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: var(--font-size-base);
+    }
+
+    .confirm-actions {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .btn-confirm-delete,
+    .admin-page .btn-cancel {
+        min-height: 44px;
+        flex: 1;
+        font-size: var(--font-size-base);
+    }
 }

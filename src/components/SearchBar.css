@@ -18,9 +18,11 @@
     width: 100%;
 }
 
-.search-bar:hover {
-    border-color: var(--color-border-light);
-    background: var(--color-bg-tertiary);
+@media (hover: hover) {
+    .search-bar:hover {
+        border-color: var(--color-border-light);
+        background: var(--color-bg-tertiary);
+    }
 }
 
 .search-bar.focused {
@@ -70,10 +72,12 @@
     flex-shrink: 0;
 }
 
-.search-clear:hover {
-    background: var(--color-border);
-    color: var(--color-text-primary);
-    transform: scale(1.1);
+@media (hover: hover) {
+    .search-clear:hover {
+        background: var(--color-border);
+        color: var(--color-text-primary);
+        transform: scale(1.1);
+    }
 }
 
 /* Search Suggestions Dropdown */
@@ -105,8 +109,10 @@
     border-bottom: none;
 }
 
-.suggestion-item:hover {
-    background: var(--color-bg-tertiary);
+@media (hover: hover) {
+    .suggestion-item:hover {
+        background: var(--color-bg-tertiary);
+    }
 }
 
 .suggestion-poster {

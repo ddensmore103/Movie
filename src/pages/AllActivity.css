@@ -27,10 +27,12 @@
     font-family: var(--font-family);
 }
 
-.back-btn:hover {
-    background: var(--color-bg-tertiary);
-    border-color: var(--color-border-light);
-    transform: translateX(-4px);
+@media (hover: hover) {
+    .back-btn:hover {
+        background: var(--color-bg-tertiary);
+        border-color: var(--color-border-light);
+        transform: translateX(-4px);
+    }
 }
 
 .page-title {
@@ -57,12 +59,14 @@
 
     .page-header-with-back {
         flex-direction: column;
-        align-items: flex-start;
+        align-items: center;
         gap: var(--space-md);
     }
 
     .page-title {
         font-size: var(--font-size-2xl);
+        text-align: center;
+        width: 100%;
     }
 
     /* MOBILE-ONLY: 2-column activity grid */

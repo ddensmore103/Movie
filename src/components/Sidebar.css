@@ -102,9 +102,11 @@
     white-space: nowrap;
 }
 
-.nav-item:hover {
-    background: var(--color-bg-tertiary);
-    color: var(--color-text-primary);
+@media (hover: hover) {
+    .nav-item:hover {
+        background: var(--color-bg-tertiary);
+        color: var(--color-text-primary);
+    }
 }
 
 .nav-item.active {
@@ -167,8 +169,10 @@
     z-index: 1000;
 }
 
-.sidebar.collapsed .nav-item:hover::after {
-    opacity: 1;
+@media (hover: hover) {
+    .sidebar.collapsed .nav-item:hover::after {
+        opacity: 1;
+    }
 }
 
 /* ===== Footer ===== */
@@ -195,10 +199,12 @@
     padding: var(--space-md) var(--space-lg);
 }
 
-.logout-btn:hover {
-    background: var(--color-bg-tertiary);
-    color: var(--color-text-primary);
-    border-color: var(--color-border-light);
+@media (hover: hover) {
+    .logout-btn:hover {
+        background: var(--color-bg-tertiary);
+        color: var(--color-text-primary);
+        border-color: var(--color-border-light);
+    }
 }
 
 .logout-btn .nav-icon {
@@ -239,9 +245,11 @@
     transition: all var(--transition-fast);
 }
 
-.hamburger-btn:hover {
-    background: var(--color-bg-tertiary);
-    border-color: var(--color-border-light);
+@media (hover: hover) {
+    .hamburger-btn:hover {
+        background: var(--color-bg-tertiary);
+        border-color: var(--color-border-light);
+    }
 }
 
 .hamburger-btn span {
@@ -277,7 +285,8 @@
     }
 
     .sidebar.expanded {
-        width: 280px;
+        width: 100vw;
+        max-width: 300px;
         z-index: 200;
     }
 
@@ -287,9 +296,11 @@
 
     .hamburger-btn {
         position: fixed;
-        left: var(--space-md);
-        top: var(--space-md);
+        left: var(--space-sm);
+        top: 10px;
         z-index: 50;
+        width: 36px;
+        height: 36px;
     }
 
     .sidebar-logo {
