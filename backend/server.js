@@ -1050,7 +1050,11 @@ app.get("/lists/:listId", authMiddleware, async (req, res) => {
                     const userResult = await db.send(new GetCommand({ TableName: "Users", Key: { userId: addedById } }));
                     userMap[addedById] = userResult.Item || { userId: addedById, username: "Unknown" };
                 }
-                return { ...movie, addedByUser: userMap[addedById] };
+                return {
+                    ...movie,
+                    addedByUser: userMap[addedById],
+                    starredBy: movie.starredBy ? [...movie.starredBy] : [],
+                };
             })
         );
 
@@ -1193,6 +1197,65 @@ app.delete("/lists/:listId/movies/:movieId", authMiddleware, canEditList, async 
         res.json({ message: "Movie removed from list successfully" });
     } catch (err) {
         console.error("REMOVE MOVIE FROM LIST ERROR:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ⭐ Star a movie in a list (collaborative starring)
+app.post("/lists/:listId/movies/:movieId/star", authMiddleware, canEditList, async (req, res) => {
+    try {
+        const { listId, movieId } = req.params;
+        const userId = req.user.uid;
+
+        // Add user to starredBy set
+        await db.send(new UpdateCommand({
+            TableName: "ListMovies",
+            Key: { listId, movieId },
+            UpdateExpression: "ADD starredBy :user",
+            ExpressionAttributeValues: {
+                ":user": new Set([userId]),
+            },
+        }));
+
+        // Read back the updated item to return starredBy
+        const result = await db.send(new GetCommand({
+            TableName: "ListMovies",
+            Key: { listId, movieId },
+        }));
+
+        const starredBy = result.Item?.starredBy ? [...result.Item.starredBy] : [];
+        res.json({ message: "Movie starred", starredBy });
+    } catch (err) {
+        console.error("STAR MOVIE ERROR:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ⭐ Unstar a movie in a list (collaborative starring)
+app.delete("/lists/:listId/movies/:movieId/star", authMiddleware, canEditList, async (req, res) => {
+    try {
+        const { listId, movieId } = req.params;
+        const userId = req.user.uid;
+
+        await db.send(new UpdateCommand({
+            TableName: "ListMovies",
+            Key: { listId, movieId },
+            UpdateExpression: "DELETE starredBy :user",
+            ExpressionAttributeValues: {
+                ":user": new Set([userId]),
+            },
+        }));
+
+        // Read back the updated item
+        const result = await db.send(new GetCommand({
+            TableName: "ListMovies",
+            Key: { listId, movieId },
+        }));
+
+        const starredBy = result.Item?.starredBy ? [...result.Item.starredBy] : [];
+        res.json({ message: "Movie unstarred", starredBy });
+    } catch (err) {
+        console.error("UNSTAR MOVIE ERROR:", err);
         res.status(500).json({ error: err.message });
     }
 });

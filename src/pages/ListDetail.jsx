@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { getListById, removeMovieFromList, starList, unstarList } from '../services/api';
+import { getListById, removeMovieFromList, starList, unstarList, starMovieInList, unstarMovieInList } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 import { getImageUrl } from '../services/tmdb';
 import AddMovieToListModal from '../components/AddMovieToListModal';
 import ManageCollaboratorsModal from '../components/ManageCollaboratorsModal';
@@ -12,6 +13,7 @@ const ListDetail = () => {
     const { listId } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
+    const { currentUser } = useAuth();
     const [list, setList] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -125,6 +127,33 @@ const ListDetail = () => {
         }
     };
 
+    // Toggle star on a movie within a collaborative list
+    const handleToggleMovieStar = async (movie) => {
+        const isStarredByMe = (movie.starredBy || []).includes(currentUser?.uid);
+        try {
+            // Optimistic update
+            const updatedStarredBy = isStarredByMe
+                ? (movie.starredBy || []).filter(id => id !== currentUser.uid)
+                : [...(movie.starredBy || []), currentUser.uid];
+
+            setList(prev => ({
+                ...prev,
+                movies: prev.movies.map(m =>
+                    m.movieId === movie.movieId ? { ...m, starredBy: updatedStarredBy } : m
+                ),
+            }));
+
+            if (isStarredByMe) {
+                await unstarMovieInList(listId, movie.movieId);
+            } else {
+                await starMovieInList(listId, movie.movieId);
+            }
+        } catch (err) {
+            console.error('Error toggling movie star:', err);
+            loadListDetails(); // Revert on error
+        }
+    };
+
     if (loading) {
         return (
             <div className="list-detail-page">
@@ -222,10 +251,22 @@ const ListDetail = () => {
             <div className="list-movies-container">
                 {list.movies && list.movies.length > 0 ? (
                     (() => {
+                        // Sort all movies: starred first (by star count desc), then by addedAt newest first
+                        const isCollabList = list.collaborators?.length > 0;
+                        const sortedMovies = [...list.movies].sort((a, b) => {
+                            if (isCollabList) {
+                                const aStars = (a.starredBy || []).length;
+                                const bStars = (b.starredBy || []).length;
+                                if (aStars !== bStars) return bStars - aStars;
+                            }
+                            // Then by addedAt newest first
+                            return new Date(b.addedAt || 0) - new Date(a.addedAt || 0);
+                        });
+
                         // Group movies: collections together, ungrouped separate
                         const collectionMap = {};
                         const ungrouped = [];
-                        list.movies.forEach((movie) => {
+                        sortedMovies.forEach((movie) => {
                             if (movie.collectionId) {
                                 if (!collectionMap[movie.collectionId]) {
                                     collectionMap[movie.collectionId] = [];
@@ -241,11 +282,10 @@ const ListDetail = () => {
                             movies.sort((a, b) => new Date(a.releaseDate || 0) - new Date(b.releaseDate || 0));
                         });
 
-                        // Build render order: ungrouped movies + collection groups
-                        // Insert collection group at the position of its first movie
+                        // Build render order preserving sorted positions
                         const renderItems = [];
                         const processedCollections = new Set();
-                        list.movies.forEach((movie) => {
+                        sortedMovies.forEach((movie) => {
                             if (movie.collectionId) {
                                 if (!processedCollections.has(movie.collectionId)) {
                                     processedCollections.add(movie.collectionId);
@@ -260,56 +300,75 @@ const ListDetail = () => {
                             }
                         });
 
-                        const renderMovieCard = (movie) => (
-                            <div key={movie.movieId} className="movie-card-wrapper">
-                                {movie.addedByUser && list.collaborators?.length > 0 && (
-                                    <div className="added-by-bubble" title={`Added by ${movie.addedByUser.username || movie.addedByUser.email || 'Unknown'}`}>
-                                        <UserAvatar user={movie.addedByUser} size="small" />
-                                        <span className="added-by-tooltip">
-                                            Added by {movie.addedByUser.username || movie.addedByUser.email || 'Unknown'}
-                                        </span>
-                                    </div>
-                                )}
-                                <div
-                                    className="movie-card"
-                                    onClick={() => handleMovieClick(movie.tmdbId)}
-                                >
-                                    <img
-                                        src={getImageUrl(movie.posterPath, 'medium', 'poster')}
-                                        alt={movie.title}
-                                        className="movie-poster"
-                                    />
-                                    <div className="movie-info">
-                                        <h3 className="movie-title">{movie.title}</h3>
-                                        <div className="movie-meta">
-                                            {movie.releaseDate && (
-                                                <span className="movie-year">
-                                                    {new Date(movie.releaseDate).getFullYear()}
-                                                </span>
-                                            )}
-                                            {movie.rating && (
-                                                <span className="movie-rating">
-                                                    ⭐ {movie.rating.toFixed(1)}
-                                                </span>
-                                            )}
+                        const renderMovieCard = (movie) => {
+                            const isCollabList = list.collaborators?.length > 0;
+                            const starCount = (movie.starredBy || []).length;
+                            const isStarredByMe = (movie.starredBy || []).includes(currentUser?.uid);
+                            return (
+                                <div key={movie.movieId} className="movie-card-wrapper">
+                                    {movie.addedByUser && list.collaborators?.length > 0 && (
+                                        <div className="added-by-bubble" title={`Added by ${movie.addedByUser.username || movie.addedByUser.email || 'Unknown'}`}>
+                                            <UserAvatar user={movie.addedByUser} size="small" />
+                                            <span className="added-by-tooltip">
+                                                Added by {movie.addedByUser.username || movie.addedByUser.email || 'Unknown'}
+                                            </span>
+                                        </div>
+                                    )}
+                                    <div
+                                        className="movie-card"
+                                        onClick={() => handleMovieClick(movie.tmdbId)}
+                                    >
+                                        <img
+                                            src={getImageUrl(movie.posterPath, 'medium', 'poster')}
+                                            alt={movie.title}
+                                            className="movie-poster"
+                                        />
+                                        <div className="movie-info">
+                                            <h3 className="movie-title">{movie.title}</h3>
+                                            <div className="movie-meta">
+                                                {movie.releaseDate && (
+                                                    <span className="movie-year">
+                                                        {new Date(movie.releaseDate).getFullYear()}
+                                                    </span>
+                                                )}
+                                                {movie.rating && (
+                                                    <span className="movie-rating">
+                                                        ⭐ {movie.rating.toFixed(1)}
+                                                    </span>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
+                                    {/* Star button for collaborative lists */}
+                                    {isCollabList && (list.isOwner || list.isCollaborator) && (
+                                        <button
+                                            className={`movie-star-btn ${isStarredByMe ? 'starred' : ''}`}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleToggleMovieStar(movie);
+                                            }}
+                                            title={isStarredByMe ? 'Unstar this movie' : 'Star this movie'}
+                                        >
+                                            {isStarredByMe ? '★' : '☆'}
+                                            {starCount > 0 && <span className="star-count">{starCount}</span>}
+                                        </button>
+                                    )}
+                                    {(list.isOwner || list.isCollaborator) && (
+                                        <button
+                                            className="remove-movie-btn"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleRemoveMovieClick(movie);
+                                            }}
+                                            disabled={removingMovieId === movie.movieId}
+                                            title="Remove from list"
+                                        >
+                                            {removingMovieId === movie.movieId ? '⏳' : '✕'}
+                                        </button>
+                                    )}
                                 </div>
-                                {(list.isOwner || list.isCollaborator) && (
-                                    <button
-                                        className="remove-movie-btn"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleRemoveMovieClick(movie);
-                                        }}
-                                        disabled={removingMovieId === movie.movieId}
-                                        title="Remove from list"
-                                    >
-                                        {removingMovieId === movie.movieId ? '⏳' : '✕'}
-                                    </button>
-                                )}
-                            </div>
-                        );
+                            );
+                        };
 
                         return (
                             <div className="movies-list-container">

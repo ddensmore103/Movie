@@ -205,6 +205,24 @@ export const removeMovieFromList = async (listId, movieId) => {
     });
 };
 
+/**
+ * Star a movie in a list (collaborative starring)
+ */
+export const starMovieInList = async (listId, movieId) => {
+    return apiFetch(`/lists/${listId}/movies/${movieId}/star`, {
+        method: 'POST',
+    });
+};
+
+/**
+ * Unstar a movie in a list (collaborative starring)
+ */
+export const unstarMovieInList = async (listId, movieId) => {
+    return apiFetch(`/lists/${listId}/movies/${movieId}/star`, {
+        method: 'DELETE',
+    });
+};
+
 // ==================== TEST ENDPOINTS ====================
 
 /**
