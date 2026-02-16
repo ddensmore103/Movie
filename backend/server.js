@@ -944,6 +944,7 @@ app.get("/lists/:listId", authMiddleware, async (req, res) => {
         const list = listResult.Item;
         let isAllowed = false;
         let isOwner = false;
+        let isCollaborator = false;
 
         // 1. Check if owner
         if (list.ownerId === requestingUserId) {
@@ -961,6 +962,7 @@ app.get("/lists/:listId", authMiddleware, async (req, res) => {
             );
             if (collaboratorResult.Item) {
                 isAllowed = true;
+                isCollaborator = true;
             }
         }
 
@@ -1036,6 +1038,7 @@ app.get("/lists/:listId", authMiddleware, async (req, res) => {
             movies: moviesResult.Items || [],
             collaborators,
             isOwner: isOwner,
+            isCollaborator: isCollaborator,
         });
     } catch (err) {
         console.error("GET LIST ERROR:", err);

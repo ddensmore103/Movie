@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { getUserLists, addMovieToList, createList } from '../services/api';
+import { getUserLists, addMovieToList, createList, getCollaboratingLists } from '../services/api';
 import CreateListModal from './CreateListModal';
 import './SelectListModal.css';
 
@@ -38,8 +38,18 @@ const SelectListModal = ({ isOpen, onClose, movie, onSuccess, allowMultiple = fa
         setLoading(true);
         setError(null);
         try {
-            const userLists = await getUserLists(currentUser.uid);
-            setLists(userLists);
+            const [userLists, collabLists] = await Promise.all([
+                getUserLists(currentUser.uid),
+                getCollaboratingLists()
+            ]);
+
+            // Mark collaborative lists and merge, avoiding duplicates
+            const ownListIds = new Set(userLists.map(l => l.listId));
+            const markedCollabLists = collabLists
+                .filter(l => !ownListIds.has(l.listId))
+                .map(l => ({ ...l, isCollaborative: true }));
+
+            setLists([...userLists, ...markedCollabLists]);
         } catch (err) {
             console.error('Error fetching lists:', err);
             setError('Failed to load lists. Please try again.');
@@ -267,7 +277,10 @@ const SelectListModal = ({ isOpen, onClose, movie, onSuccess, allowMultiple = fa
                                             )}
                                             <div className="list-item-icon">{list.emoji || '📋'}</div>
                                             <div className="list-item-info">
-                                                <div className="list-item-name">{list.name}</div>
+                                                <div className="list-item-name">
+                                                    {list.name}
+                                                    {list.isCollaborative && <span className="collab-badge"> 👥</span>}
+                                                </div>
                                                 <div className="list-item-count">
                                                     {list.movies?.length || 0} movies
                                                 </div>

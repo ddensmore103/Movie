@@ -163,15 +163,15 @@ const ListDetail = () => {
                             )}
                         </div>
                         <div className="header-buttons">
-                            {list.isOwner && (
+                            {(list.isOwner || list.isCollaborator) && (
                                 <button
                                     className="manage-collaborators-btn"
                                     onClick={() => setIsManageCollaboratorsOpen(true)}
                                 >
-                                    👥 Manage Collaborators
+                                    {list.isOwner ? '👥 Manage Collaborators' : '👥 View Collaborators'}
                                 </button>
                             )}
-                            {list.isOwner && (
+                            {(list.isOwner || list.isCollaborator) && (
                                 <button className="add-movies-btn" onClick={handleOpenAddMovieModal}>
                                     ➕ Add Movies
                                 </button>
@@ -220,7 +220,7 @@ const ListDetail = () => {
                                         </div>
                                     </div>
                                 </div>
-                                {list.isOwner && (
+                                {(list.isOwner || list.isCollaborator) && (
                                     <button
                                         className="remove-movie-btn"
                                         onClick={(e) => {
@@ -238,7 +238,7 @@ const ListDetail = () => {
                     </div>
                 ) : (
                     <div className="empty-list">
-                        {list.isOwner ? (
+                        {(list.isOwner || list.isCollaborator) ? (
                             <>
                                 <div className="empty-list-icon" onClick={handleOpenAddMovieModal}>
                                     ➕

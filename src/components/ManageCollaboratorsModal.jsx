@@ -18,7 +18,7 @@ const ManageCollaboratorsModal = ({ listId, isOwner, onClose }) => {
         try {
             setLoading(true);
             const [friendsData, collaboratorsData] = await Promise.all([
-                getFriends(),
+                isOwner ? getFriends() : Promise.resolve([]),
                 getListCollaborators(listId)
             ]);
             setFriends(friendsData);
@@ -64,7 +64,7 @@ const ManageCollaboratorsModal = ({ listId, isOwner, onClose }) => {
         <div className="modal-overlay" onClick={onClose}>
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                 <div className="modal-header">
-                    <h2>Manage Collaborators</h2>
+                    <h2>{isOwner ? 'Manage Collaborators' : 'Collaborators'}</h2>
                     <button className="close-button" onClick={onClose}>✕</button>
                 </div>
 
