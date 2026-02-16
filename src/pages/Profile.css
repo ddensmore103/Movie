@@ -7,13 +7,36 @@
 
 .profile-header {
     display: flex;
-    align-items: center;
+    justify-content: space-between;
+    align-items: flex-start;
     gap: var(--space-2xl);
     padding: var(--space-2xl);
     background: var(--color-bg-secondary);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
     margin-bottom: var(--space-2xl);
+    flex-wrap: wrap;
+}
+
+.profile-header-main {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2xl);
+    min-width: 300px;
+}
+
+.profile-header-favorites {
+    width: 420px;
+    /* Fits 5 columns */
+    flex-shrink: 0;
+}
+
+@media (max-width: 900px) {
+    .profile-header-favorites {
+        width: 100%;
+        margin-top: 20px;
+    }
 }
 
 .profile-avatar-large {

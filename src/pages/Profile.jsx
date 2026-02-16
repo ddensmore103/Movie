@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { getUser, getUserLists, getFriends, getUserFriends, getUserReviews, getActivityFeed, getUserStats } from '../services/api';
+import { getUser, getUserLists, getFriends, getUserFriends, getUserReviews, getActivityFeed, getUserStats, updateUserProfile } from '../services/api';
 import { LuVideo, LuStar, LuList, LuUsers, LuLock } from 'react-icons/lu';
 import ActivityCard from '../components/ActivityCard';
 import UserAvatar from '../components/UserAvatar';
 import UserFriendsModal from '../components/UserFriendsModal';
+import ProfileFavorites from '../components/ProfileFavorites';
 import './Profile.css';
 
 const Profile = () => {
@@ -137,6 +138,19 @@ const Profile = () => {
         }
     }, [userId, isOwnProfile, currentUser]);
 
+    const handleUpdateFavorites = async (newFavorites) => {
+        try {
+            // Optimistic update
+            setUser(prev => ({ ...prev, topFavorites: newFavorites }));
+
+            // Backend update
+            await updateUserProfile(displayUser.userId, { topFavorites: newFavorites });
+        } catch (err) {
+            console.error('Error updating favorites:', err);
+            // Revert would be nice here, but simplicity for now
+        }
+    };
+
     if (loading) {
         return (
             <div className="profile-page">
@@ -196,25 +210,35 @@ const Profile = () => {
             )}
 
             <div className="profile-header">
-                <div className="profile-avatar-large">
-                    <UserAvatar user={displayUser} size="xl" />
+                <div className="profile-header-main">
+                    <div className="profile-avatar-large">
+                        <UserAvatar user={displayUser} size="xl" />
+                    </div>
+                    <div className="profile-info">
+                        <h1 className="profile-name" style={{ marginBottom: '0px' }}>{displayName}</h1>
+                        <p style={{ fontSize: '0.9rem', opacity: 0.7, marginTop: '2px', marginBottom: '0' }}>
+                            {displayUser?.email}
+                        </p>
+                        {displayUser?.bio && <p className="profile-bio" style={{ margin: '16px 0' }}>{displayUser.bio}</p>}
+                        {isOwnProfile && (
+                            <div className="profile-actions">
+                                <button
+                                    className="btn btn-primary"
+                                    onClick={() => navigate('/profile/edit')}
+                                >
+                                    Edit Profile
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 </div>
-                <div className="profile-info">
-                    <h1 className="profile-name" style={{ marginBottom: '0px' }}>{displayName}</h1>
-                    <p style={{ fontSize: '0.9rem', opacity: 0.7, marginTop: '2px', marginBottom: '0' }}>
-                        {displayUser?.email}
-                    </p>
-                    {displayUser?.bio && <p className="profile-bio" style={{ margin: '16px 0' }}>{displayUser.bio}</p>}
-                    {isOwnProfile && (
-                        <div className="profile-actions">
-                            <button
-                                className="btn btn-primary"
-                                onClick={() => navigate('/profile/edit')}
-                            >
-                                Edit Profile
-                            </button>
-                        </div>
-                    )}
+
+                <div className="profile-header-favorites">
+                    <ProfileFavorites
+                        user={displayUser}
+                        isOwnProfile={isOwnProfile}
+                        onUpdate={handleUpdateFavorites}
+                    />
                 </div>
             </div>
 

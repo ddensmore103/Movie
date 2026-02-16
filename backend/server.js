@@ -475,6 +475,10 @@ app.put("/users/:userId", authMiddleware, async (req, res) => {
             updateExpression += ", isPrivate = :isPrivate";
             expressionAttributeValues[":isPrivate"] = isPrivate;
         }
+        if (req.body.topFavorites !== undefined) {
+            updateExpression += ", topFavorites = :topFavorites";
+            expressionAttributeValues[":topFavorites"] = req.body.topFavorites;
+        }
 
         await db.send(new UpdateCommand({
             TableName: "Users",
