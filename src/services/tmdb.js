@@ -108,6 +108,11 @@ export const tmdbAPI = {
   // Get genres
   getGenres: async () => {
     return fetchFromTMDB('/genre/movie/list');
+  },
+
+  // Get collection (movie series)
+  getCollection: async (collectionId) => {
+    return fetchFromTMDB(`/collection/${collectionId}`);
   }
 };
 

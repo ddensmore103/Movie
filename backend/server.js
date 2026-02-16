@@ -1033,9 +1033,30 @@ app.get("/lists/:listId", authMiddleware, async (req, res) => {
             })
         );
 
+        // Build a user lookup map from owner + collaborators to resolve addedBy
+        const userMap = {};
+        // Add owner
+        const ownerLookup = await db.send(new GetCommand({ TableName: "Users", Key: { userId: list.ownerId } }));
+        if (ownerLookup.Item) userMap[list.ownerId] = ownerLookup.Item;
+        // Add collaborators
+        collaborators.forEach(c => { if (c.user) userMap[c.userId] = c.user; });
+
+        // Enrich movies with addedBy user details
+        // Legacy movies without addedBy default to the list owner
+        const movies = await Promise.all(
+            (moviesResult.Items || []).map(async (movie) => {
+                const addedById = movie.addedBy || list.ownerId;
+                if (!userMap[addedById]) {
+                    const userResult = await db.send(new GetCommand({ TableName: "Users", Key: { userId: addedById } }));
+                    userMap[addedById] = userResult.Item || { userId: addedById, username: "Unknown" };
+                }
+                return { ...movie, addedByUser: userMap[addedById] };
+            })
+        );
+
         res.json({
             ...list,
-            movies: moviesResult.Items || [],
+            movies,
             collaborators,
             isOwner: isOwner,
             isCollaborator: isCollaborator,
@@ -1113,7 +1134,7 @@ app.delete("/lists/:listId", authMiddleware, async (req, res) => {
 app.post("/lists/:listId/movies", authMiddleware, canEditList, async (req, res) => {
     try {
         const { listId } = req.params;
-        const { tmdbId, title, posterPath, releaseDate, rating } = req.body;
+        const { tmdbId, title, posterPath, releaseDate, rating, collectionId } = req.body;
 
         if (!tmdbId || !title) {
             return res.status(400).json({ error: "tmdbId and title are required" });
@@ -1132,6 +1153,8 @@ app.post("/lists/:listId/movies", authMiddleware, canEditList, async (req, res) 
             posterPath: posterPath || null,
             releaseDate: releaseDate || null,
             rating: rating || null,
+            collectionId: collectionId || null,
+            addedBy: req.user.uid,
             addedAt: new Date().toISOString(),
         };
 

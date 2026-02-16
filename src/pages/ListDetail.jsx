@@ -5,6 +5,7 @@ import { getImageUrl } from '../services/tmdb';
 import AddMovieToListModal from '../components/AddMovieToListModal';
 import ManageCollaboratorsModal from '../components/ManageCollaboratorsModal';
 import ConfirmationModal from '../components/ConfirmationModal';
+import UserAvatar from '../components/UserAvatar';
 import './ListDetail.css';
 
 const ListDetail = () => {
@@ -192,9 +193,55 @@ const ListDetail = () => {
 
             <div className="list-movies-container">
                 {list.movies && list.movies.length > 0 ? (
-                    <div className="movies-grid">
-                        {list.movies.map((movie) => (
+                    (() => {
+                        // Group movies: collections together, ungrouped separate
+                        const collectionMap = {};
+                        const ungrouped = [];
+                        list.movies.forEach((movie) => {
+                            if (movie.collectionId) {
+                                if (!collectionMap[movie.collectionId]) {
+                                    collectionMap[movie.collectionId] = [];
+                                }
+                                collectionMap[movie.collectionId].push(movie);
+                            } else {
+                                ungrouped.push(movie);
+                            }
+                        });
+
+                        // Sort collection movies by release date
+                        Object.values(collectionMap).forEach((movies) => {
+                            movies.sort((a, b) => new Date(a.releaseDate || 0) - new Date(b.releaseDate || 0));
+                        });
+
+                        // Build render order: ungrouped movies + collection groups
+                        // Insert collection group at the position of its first movie
+                        const renderItems = [];
+                        const processedCollections = new Set();
+                        list.movies.forEach((movie) => {
+                            if (movie.collectionId) {
+                                if (!processedCollections.has(movie.collectionId)) {
+                                    processedCollections.add(movie.collectionId);
+                                    renderItems.push({
+                                        type: 'collection',
+                                        collectionId: movie.collectionId,
+                                        movies: collectionMap[movie.collectionId],
+                                    });
+                                }
+                            } else {
+                                renderItems.push({ type: 'single', movie });
+                            }
+                        });
+
+                        const renderMovieCard = (movie) => (
                             <div key={movie.movieId} className="movie-card-wrapper">
+                                {movie.addedByUser && (
+                                    <div className="added-by-bubble" title={`Added by ${movie.addedByUser.username || movie.addedByUser.email || 'Unknown'}`}>
+                                        <UserAvatar user={movie.addedByUser} size="small" />
+                                        <span className="added-by-tooltip">
+                                            Added by {movie.addedByUser.username || movie.addedByUser.email || 'Unknown'}
+                                        </span>
+                                    </div>
+                                )}
                                 <div
                                     className="movie-card"
                                     onClick={() => handleMovieClick(movie.tmdbId)}
@@ -234,8 +281,30 @@ const ListDetail = () => {
                                     </button>
                                 )}
                             </div>
-                        ))}
-                    </div>
+                        );
+
+                        return (
+                            <div className="movies-list-container">
+                                {renderItems.map((item, idx) => {
+                                    if (item.type === 'collection') {
+                                        return (
+                                            <div key={`col-${item.collectionId}`} className="collection-group">
+                                                <div className="collection-group-label">🎬 Series</div>
+                                                <div className="movies-grid">
+                                                    {item.movies.map(renderMovieCard)}
+                                                </div>
+                                            </div>
+                                        );
+                                    }
+                                    return (
+                                        <div key={item.movie.movieId} className="movies-grid single-movie-row">
+                                            {renderMovieCard(item.movie)}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        );
+                    })()
                 ) : (
                     <div className="empty-list">
                         {(list.isOwner || list.isCollaborator) ? (

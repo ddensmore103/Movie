@@ -134,6 +134,18 @@
     margin-bottom: 4px;
 }
 
+.collaborator-link {
+    text-decoration: none;
+    display: block;
+    transition: color 0.2s;
+}
+
+@media (hover: hover) {
+    .collaborator-link:hover {
+        color: #667eea;
+    }
+}
+
 .collaborator-email,
 .friend-email {
     font-size: 0.85rem;

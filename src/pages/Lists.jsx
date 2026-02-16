@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { getUserLists, createList, deleteList, getCollaboratingLists, starList, unstarList } from '../services/api';
 import { getImageUrl } from '../services/tmdb';
-import CreateListModal from '../components/CreateListModal';
+import CreateListModal, { importMoviesFromFile } from '../components/CreateListModal';
 import AddMovieToListModal from '../components/AddMovieToListModal';
 import ConfirmationModal from '../components/ConfirmationModal';
 import './Lists.css';
@@ -77,12 +77,20 @@ const Lists = () => {
         }
     };
 
-    const handleCreateList = async (listName) => {
+    const handleCreateList = async (listName, file) => {
         setIsCreating(true);
         try {
             const newList = await createList({ name: listName });
+
+            if (file) {
+                // Import movies from the text file
+                await importMoviesFromFile(file, newList.listId);
+            }
+
             setUserLists([...userLists, newList]);
             setIsCreateModalOpen(false);
+            // Reload to get updated movie counts
+            loadUserLists();
         } catch (err) {
             console.error('Error creating list:', err);
             alert('Failed to create list. Please try again.');

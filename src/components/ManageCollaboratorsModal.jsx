@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { getFriends, addCollaborator, removeCollaborator, getListCollaborators } from '../services/api';
 import UserAvatar from './UserAvatar';
 import './ManageCollaboratorsModal.css';
@@ -85,9 +86,13 @@ const ManageCollaboratorsModal = ({ listId, isOwner, onClose }) => {
                                                 <UserAvatar user={collab.user || collab} size="small" />
                                             </div>
                                             <div className="collaborator-info">
-                                                <div className="collaborator-name">
+                                                <Link
+                                                    to={`/profile/${collab.userId}`}
+                                                    className="collaborator-name collaborator-link"
+                                                    onClick={onClose}
+                                                >
                                                     {collab.user?.username || collab.user?.email || 'Unknown'}
-                                                </div>
+                                                </Link>
                                                 <div className="collaborator-email">{collab.user?.email}</div>
                                             </div>
                                             {isOwner && (

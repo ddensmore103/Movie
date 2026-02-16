@@ -76,6 +76,51 @@
     min-height: 400px;
 }
 
+/* Container for grouped + ungrouped movies */
+.movies-list-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xl);
+}
+
+/* Collection group box */
+.collection-group {
+    border: 1.5px solid rgba(102, 126, 234, 0.35);
+    border-radius: 16px;
+    padding: 20px;
+    position: relative;
+    background: rgba(102, 126, 234, 0.04);
+    width: fit-content;
+}
+
+.collection-group .movies-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xl);
+}
+
+.collection-group .movie-card-wrapper {
+    width: 180px;
+}
+
+.collection-group-label {
+    position: absolute;
+    top: -10px;
+    left: 20px;
+    background: var(--color-bg-primary, #0f1117);
+    padding: 0 10px;
+    font-size: 0.78rem;
+    color: #7e8eea;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
+
+/* Single ungrouped movies in the flow */
+.single-movie-row {
+    width: 180px;
+}
+
+
 .movies-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -185,6 +230,60 @@
 .remove-movie-btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+}
+
+/* Added-by avatar bubble */
+.added-by-bubble {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    z-index: 3;
+    cursor: default;
+}
+
+.added-by-bubble .user-avatar {
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px;
+    min-height: 28px;
+    border: 2px solid rgba(255, 255, 255, 0.8);
+    border-radius: 50%;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.added-by-bubble .user-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.added-by-bubble:hover .user-avatar {
+    transform: scale(1.15);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.added-by-tooltip {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 6px;
+    background: rgba(0, 0, 0, 0.9);
+    color: #fff;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(-4px);
+    transition: opacity 0.2s, transform 0.2s;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.added-by-bubble:hover .added-by-tooltip {
+    opacity: 1;
+    transform: translateY(0);
 }
 
 /* Empty state */
