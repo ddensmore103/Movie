@@ -20,6 +20,8 @@ const ListDetail = () => {
     const [isManageCollaboratorsOpen, setIsManageCollaboratorsOpen] = useState(false);
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
     const [movieToDelete, setMovieToDelete] = useState(null);
+    const [seriesToDelete, setSeriesToDelete] = useState(null);
+    const [removingSeries, setRemovingSeries] = useState(false);
 
     useEffect(() => {
         loadListDetails();
@@ -41,26 +43,52 @@ const ListDetail = () => {
 
     const handleRemoveMovieClick = (movie) => {
         setMovieToDelete(movie);
+        setSeriesToDelete(null);
         setIsConfirmModalOpen(true);
     };
 
-    const handleConfirmRemoveMovie = async () => {
-        if (!movieToDelete) return;
+    const handleRemoveSeriesClick = (collectionId, movies) => {
+        setSeriesToDelete({ collectionId, movies });
+        setMovieToDelete(null);
+        setIsConfirmModalOpen(true);
+    };
 
-        setRemovingMovieId(movieToDelete.movieId);
-        try {
-            await removeMovieFromList(listId, movieToDelete.movieId);
-            // Update local state to remove the movie
-            setList({
-                ...list,
-                movies: list.movies.filter(movie => movie.movieId !== movieToDelete.movieId)
-            });
-        } catch (err) {
-            console.error('Error removing movie:', err);
-            alert('Failed to remove movie. Please try again.');
-        } finally {
-            setRemovingMovieId(null);
-            setMovieToDelete(null);
+    const handleConfirmRemove = async () => {
+        if (seriesToDelete) {
+            // Remove entire series
+            setRemovingSeries(true);
+            try {
+                for (const movie of seriesToDelete.movies) {
+                    await removeMovieFromList(listId, movie.movieId);
+                }
+                setList({
+                    ...list,
+                    movies: list.movies.filter(m => m.collectionId !== seriesToDelete.collectionId)
+                });
+            } catch (err) {
+                console.error('Error removing series:', err);
+                alert('Failed to remove series. Please try again.');
+            } finally {
+                setRemovingSeries(false);
+                setSeriesToDelete(null);
+                setIsConfirmModalOpen(false);
+            }
+        } else if (movieToDelete) {
+            // Remove single movie
+            setRemovingMovieId(movieToDelete.movieId);
+            try {
+                await removeMovieFromList(listId, movieToDelete.movieId);
+                setList({
+                    ...list,
+                    movies: list.movies.filter(movie => movie.movieId !== movieToDelete.movieId)
+                });
+            } catch (err) {
+                console.error('Error removing movie:', err);
+                alert('Failed to remove movie. Please try again.');
+            } finally {
+                setRemovingMovieId(null);
+                setMovieToDelete(null);
+            }
         }
     };
 
@@ -234,7 +262,7 @@ const ListDetail = () => {
 
                         const renderMovieCard = (movie) => (
                             <div key={movie.movieId} className="movie-card-wrapper">
-                                {movie.addedByUser && (
+                                {movie.addedByUser && list.collaborators?.length > 0 && (
                                     <div className="added-by-bubble" title={`Added by ${movie.addedByUser.username || movie.addedByUser.email || 'Unknown'}`}>
                                         <UserAvatar user={movie.addedByUser} size="small" />
                                         <span className="added-by-tooltip">
@@ -290,6 +318,16 @@ const ListDetail = () => {
                                         return (
                                             <div key={`col-${item.collectionId}`} className="collection-group">
                                                 <div className="collection-group-label">🎬 Series</div>
+                                                {(list.isOwner || list.isCollaborator) && (
+                                                    <button
+                                                        className="remove-series-btn"
+                                                        onClick={() => handleRemoveSeriesClick(item.collectionId, item.movies)}
+                                                        disabled={removingSeries}
+                                                        title="Remove entire series"
+                                                    >
+                                                        ✕
+                                                    </button>
+                                                )}
                                                 <div className="movies-grid">
                                                     {item.movies.map(renderMovieCard)}
                                                 </div>
@@ -335,10 +373,14 @@ const ListDetail = () => {
                 onClose={() => {
                     setIsConfirmModalOpen(false);
                     setMovieToDelete(null);
+                    setSeriesToDelete(null);
                 }}
-                onConfirm={handleConfirmRemoveMovie}
-                title="Remove Movie"
-                message={`Remove "${movieToDelete?.title}" from this list?`}
+                onConfirm={handleConfirmRemove}
+                title={seriesToDelete ? 'Remove Series' : 'Remove Movie'}
+                message={seriesToDelete
+                    ? `Remove all ${seriesToDelete.movies.length} movies in this series from the list?`
+                    : `Remove "${movieToDelete?.title}" from this list?`
+                }
                 confirmText="Remove"
                 confirmStyle="danger"
             />

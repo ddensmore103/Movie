@@ -113,6 +113,24 @@
     cursor: not-allowed;
 }
 
+.list-item.already-in {
+    opacity: 0.55;
+    cursor: default;
+    border-color: rgba(72, 187, 120, 0.25);
+}
+
+.list-item.already-in:hover {
+    transform: none;
+    background: var(--color-bg-secondary);
+    border-color: rgba(72, 187, 120, 0.25);
+}
+
+.already-in-badge {
+    color: #48bb78;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
 .list-checkbox {
     display: flex;
     align-items: center;
@@ -203,6 +221,138 @@
 
 .modal-empty p {
     margin: var(--space-sm) 0;
+}
+
+/* Series prompt in SelectListModal */
+.select-list-modal .series-prompt {
+    text-align: center;
+    padding: 0;
+}
+
+.select-list-modal .series-prompt-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.select-list-modal .series-icon {
+    font-size: 1.6rem;
+}
+
+.select-list-modal .series-prompt-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: #fff;
+}
+
+.select-list-modal .series-name {
+    font-size: 1.05rem;
+    color: #7ec8f0;
+    margin: 0 0 4px 0;
+    font-weight: 600;
+}
+
+.select-list-modal .series-count {
+    font-size: 0.85rem;
+    color: #888;
+    margin: 0 0 16px 0;
+}
+
+.select-list-modal .series-movies-preview {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.select-list-modal .series-movie-thumb {
+    width: 70px;
+    position: relative;
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.select-list-modal .series-movie-thumb img {
+    width: 100%;
+    aspect-ratio: 2/3;
+    object-fit: cover;
+    display: block;
+}
+
+.select-list-modal .series-movie-year {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.75);
+    color: #ccc;
+    font-size: 0.7rem;
+    padding: 3px 0;
+    text-align: center;
+}
+
+.select-list-modal .series-prompt-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.select-list-modal .btn-series-all {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.15s;
+}
+
+.select-list-modal .btn-series-all:hover:not(:disabled) {
+    opacity: 0.9;
+    transform: scale(1.02);
+}
+
+.select-list-modal .btn-series-one {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #ccc;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.select-list-modal .btn-series-one:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+}
+
+.select-list-modal .btn-series-cancel {
+    background: none;
+    border: none;
+    color: #666;
+    padding: 8px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: color 0.2s;
+}
+
+.select-list-modal .btn-series-cancel:hover:not(:disabled) {
+    color: #aaa;
+}
+
+.select-list-modal .btn-series-all:disabled,
+.select-list-modal .btn-series-one:disabled,
+.select-list-modal .btn-series-cancel:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 @keyframes slideIn {
