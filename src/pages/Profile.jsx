@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { getUser, getUserLists, getFriends, getUserFriends, getUserReviews, getActivityFeed, getUserStats, updateUserProfile } from '../services/api';
-import { LuVideo, LuStar, LuList, LuUsers, LuLock } from 'react-icons/lu';
+import { getUser, getUserLists, getFriends, getUserFriends, getUserReviews, getActivityFeed, getUserStats, updateUserProfile, sendFriendRequest, getSentFriendRequests, getPendingFriendRequests } from '../services/api';
+import { LuVideo, LuStar, LuList, LuUsers, LuLock, LuUserPlus, LuCheck, LuClock } from 'react-icons/lu';
 import ActivityCard from '../components/ActivityCard';
 import UserAvatar from '../components/UserAvatar';
 import UserFriendsModal from '../components/UserFriendsModal';
@@ -23,12 +23,50 @@ const Profile = () => {
     const [error, setError] = useState(null);
     const [stats, setStats] = useState([]);
     const [isFriendsModalOpen, setIsFriendsModalOpen] = useState(false);
+    const [friendStatus, setFriendStatus] = useState('none'); // 'none', 'friend', 'sent', 'received'
+    const [actionLoading, setActionLoading] = useState(false);
 
     // Determine if viewing own profile or another user's profile
     const isOwnProfile = !userId || userId === currentUser?.uid;
     const targetUserId = isOwnProfile ? currentUser?.uid : userId;
     // Prefer fetched 'user' data as it contains extra fields like bio
     const displayUser = user || (isOwnProfile ? currentUser : null);
+
+    // Check friend status when viewing another profile
+    useEffect(() => {
+        const checkStatus = async () => {
+            if (isOwnProfile || !currentUser || !targetUserId) return;
+
+            // 1. Check if already friends (using the friends list we just fetched)
+            const isFriend = friends.some(f => f.userId === currentUser.uid);
+            if (isFriend) {
+                setFriendStatus('friend');
+                return;
+            }
+
+            try {
+                // 2. Check for pending requests
+                const [sentReqs, receivedReqs] = await Promise.all([
+                    getSentFriendRequests(),
+                    getPendingFriendRequests()
+                ]);
+
+                if (sentReqs.some(req => req.toUserId === targetUserId)) {
+                    setFriendStatus('sent');
+                } else if (receivedReqs.some(req => req.fromUserId === targetUserId)) {
+                    setFriendStatus('received');
+                } else {
+                    setFriendStatus('none');
+                }
+            } catch (err) {
+                console.error('Error checking friend status:', err);
+            }
+        };
+
+        if (!loading) {
+            checkStatus();
+        }
+    }, [isOwnProfile, currentUser, targetUserId, friends, loading]);
 
     // Fetch user data
     useEffect(() => {
@@ -151,6 +189,21 @@ const Profile = () => {
         }
     };
 
+    const handleSendFriendRequest = async () => {
+        if (!currentUser || actionLoading) return;
+
+        try {
+            setActionLoading(true);
+            await sendFriendRequest(targetUserId);
+            setFriendStatus('sent');
+        } catch (err) {
+            console.error('Error sending friend request:', err);
+            // Optionally show toast/error
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
     if (loading) {
         return (
             <div className="profile-page">
@@ -220,16 +273,52 @@ const Profile = () => {
                             {displayUser?.email}
                         </p>
                         {displayUser?.bio && <p className="profile-bio" style={{ margin: '16px 0' }}>{displayUser.bio}</p>}
-                        {isOwnProfile && (
-                            <div className="profile-actions">
+
+                        <div className="profile-actions">
+                            {isOwnProfile ? (
                                 <button
                                     className="btn btn-primary"
                                     onClick={() => navigate('/profile/edit')}
                                 >
                                     Edit Profile
                                 </button>
-                            </div>
-                        )}
+                            ) : (
+                                // Add Friend Button Logic
+                                <>
+                                    {friendStatus === 'none' && (
+                                        <button
+                                            className="btn btn-primary"
+                                            onClick={handleSendFriendRequest}
+                                            disabled={actionLoading}
+                                        >
+                                            <LuUserPlus style={{ marginRight: '8px' }} />
+                                            {actionLoading ? 'Sending...' : 'Add Friend'}
+                                        </button>
+                                    )}
+                                    {friendStatus === 'sent' && (
+                                        <button className="btn btn-secondary" disabled>
+                                            <LuClock style={{ marginRight: '8px' }} />
+                                            Request Sent
+                                        </button>
+                                    )}
+                                    {friendStatus === 'received' && (
+                                        <button
+                                            className="btn btn-primary"
+                                            onClick={() => navigate('/friends')}
+                                        >
+                                            <LuUserPlus style={{ marginRight: '8px' }} />
+                                            Accept Request
+                                        </button>
+                                    )}
+                                    {friendStatus === 'friend' && (
+                                        <button className="btn btn-outline" disabled style={{ borderColor: 'var(--color-success)', color: 'var(--color-success)' }}>
+                                            <LuCheck style={{ marginRight: '8px' }} />
+                                            Friend
+                                        </button>
+                                    )}
+                                </>
+                            )}
+                        </div>
                     </div>
                 </div>
 

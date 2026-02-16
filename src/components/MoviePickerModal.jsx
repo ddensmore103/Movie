@@ -11,6 +11,9 @@ const MoviePickerModal = ({ isOpen, onClose, onSelect }) => {
     useEffect(() => {
         if (isOpen && inputRef.current) {
             inputRef.current.focus();
+        } else if (!isOpen) {
+            setQuery('');
+            setResults([]);
         }
     }, [isOpen]);
 

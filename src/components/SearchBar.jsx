@@ -60,6 +60,7 @@ const SearchBar = ({ onSearch, resetTrigger }) => {
         e.preventDefault();
         if (query.trim() && onSearch) {
             onSearch(query);
+            setQuery(''); // Clear search bar after search
             setShowSuggestions(false);
             // Remove focus from search input
             if (inputRef.current) {
