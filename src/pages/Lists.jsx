@@ -47,28 +47,44 @@ const Lists = () => {
                 getCollaboratingLists()
             ]);
 
-            // Sort: Favorites first, then StarredByDate (oldest first), then CreatedByDate (oldest first)
-            const sortedLists = ownedLists.sort((a, b) => {
-                // 1. Favorites always first
-                if (a.name === 'Favorites') return -1;
-                if (b.name === 'Favorites') return 1;
+            // Separate owned lists into purely private and shared
+            const privateLists = [];
+            const sharedLists = [...collabLists]; // Start with lists where I am a collaborator
 
-                // 2. Starred vs Unstarred
-                if (a.isStarred !== b.isStarred) {
-                    return a.isStarred ? -1 : 1;
+            ownedLists.forEach(list => {
+                if (list.collaborators && list.collaborators.length > 0) {
+                    // It's a list I own but it has collaborators -> Shared
+                    sharedLists.push(list);
+                } else {
+                    // No collaborators -> Private
+                    privateLists.push(list);
                 }
-
-                // 3. Both Starred: Sort by starredAt ascending (oldest first)
-                if (a.isStarred) {
-                    return new Date(a.starredAt || a.createdAt) - new Date(b.starredAt || b.createdAt);
-                }
-
-                // 4. Both Unstarred: Sort by createdAt ascending (oldest first)
-                return new Date(a.createdAt) - new Date(b.createdAt);
             });
 
-            setUserLists(sortedLists);
-            setCollaboratingLists(collabLists);
+            // Sorting function
+            const sortLists = (lists) => {
+                return lists.sort((a, b) => {
+                    // 1. Favorites always first
+                    if (a.name === 'Favorites') return -1;
+                    if (b.name === 'Favorites') return 1;
+
+                    // 2. Starred vs Unstarred
+                    if (a.isStarred !== b.isStarred) {
+                        return a.isStarred ? -1 : 1;
+                    }
+
+                    // 3. Both Starred: Sort by starredAt ascending (oldest first)
+                    if (a.isStarred) {
+                        return new Date(a.starredAt || a.createdAt) - new Date(b.starredAt || b.createdAt);
+                    }
+
+                    // 4. Both Unstarred: Sort by createdAt ascending (oldest first)
+                    return new Date(a.createdAt) - new Date(b.createdAt);
+                });
+            };
+
+            setUserLists(sortLists(privateLists));
+            setCollaboratingLists(sortLists(sharedLists));
         } catch (err) {
             console.error('Error loading lists:', err);
             setError('Failed to load lists. Please try again.');

@@ -306,23 +306,25 @@ const ListDetail = () => {
                             const isStarredByMe = (movie.starredBy || []).includes(currentUser?.uid);
                             return (
                                 <div key={movie.movieId} className="movie-card-wrapper">
-                                    {movie.addedByUser && list.collaborators?.length > 0 && (
-                                        <div className="added-by-bubble" title={`Added by ${movie.addedByUser.username || movie.addedByUser.email || 'Unknown'}`}>
-                                            <UserAvatar user={movie.addedByUser} size="small" />
-                                            <span className="added-by-tooltip">
-                                                Added by {movie.addedByUser.username || movie.addedByUser.email || 'Unknown'}
-                                            </span>
-                                        </div>
-                                    )}
                                     <div
                                         className="movie-card"
                                         onClick={() => handleMovieClick(movie.tmdbId)}
                                     >
-                                        <img
-                                            src={getImageUrl(movie.posterPath, 'medium', 'poster')}
-                                            alt={movie.title}
-                                            className="movie-poster"
-                                        />
+                                        <div className="movie-poster-wrapper">
+                                            <img
+                                                src={getImageUrl(movie.posterPath, 'medium', 'poster')}
+                                                alt={movie.title}
+                                                className="movie-poster"
+                                            />
+                                            {movie.addedByUser && list.collaborators?.length > 0 && (
+                                                <div className="list-movie-added-by">
+                                                    <UserAvatar user={movie.addedByUser} size="small" />
+                                                    <span className="added-by-name">
+                                                        {movie.addedByUser.username || movie.addedByUser.email || 'Unknown'}
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
                                         <div className="movie-info">
                                             <h3 className="movie-title">{movie.title}</h3>
                                             <div className="movie-meta">
@@ -339,8 +341,8 @@ const ListDetail = () => {
                                             </div>
                                         </div>
                                     </div>
-                                    {/* Star button for collaborative lists */}
-                                    {isCollabList && (list.isOwner || list.isCollaborator) && (
+                                    {/* Star button: Owner can always star (personal or collab). Collaborators can star if collab. */}
+                                    {(list.isOwner || (isCollabList && list.isCollaborator)) && (
                                         <button
                                             className={`movie-star-btn ${isStarredByMe ? 'starred' : ''}`}
                                             onClick={(e) => {
@@ -350,7 +352,8 @@ const ListDetail = () => {
                                             title={isStarredByMe ? 'Unstar this movie' : 'Star this movie'}
                                         >
                                             {isStarredByMe ? '★' : '☆'}
-                                            {starCount > 0 && <span className="star-count">{starCount}</span>}
+                                            {/* Only show count if collaborative */}
+                                            {isCollabList && starCount > 0 && <span className="star-count">{starCount}</span>}
                                         </button>
                                     )}
                                     {(list.isOwner || list.isCollaborator) && (

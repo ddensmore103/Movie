@@ -85,14 +85,13 @@ const canEditList = async (req, res, next) => {
 
         const list = listResult.Item;
 
-        // Check if user is owner
+        // 1. Check if owner
         if (list.ownerId === userId) {
             req.list = list;
-            req.isOwner = true;
             return next();
         }
 
-        // Check if user is a collaborator
+        // 2. Check if collaborator
         const collaboratorResult = await db.send(
             new GetCommand({
                 TableName: "ListCollaborators",
@@ -101,16 +100,20 @@ const canEditList = async (req, res, next) => {
         );
 
         if (collaboratorResult.Item) {
-            req.list = list;
-            req.isOwner = false;
-            return next();
+            // Check if collaborator has edit permission
+            // If canEdit is undefined (legacy), default to true
+            if (collaboratorResult.Item.canEdit !== false) {
+                req.list = list;
+                return next();
+            } else {
+                return res.status(403).json({ error: "You only have view access to this list" });
+            }
         }
 
-        // User is neither owner nor collaborator
-        return res.status(403).json({ error: "You don't have permission to edit this list" });
+        return res.status(403).json({ error: "You do not have permission to edit this list" });
     } catch (err) {
-        console.error("canEditList middleware error:", err);
-        res.status(500).json({ error: err.message });
+        console.error("Middleware Error:", err);
+        res.status(500).json({ error: "Server error" });
     }
 };
 
@@ -823,7 +826,11 @@ app.get('/users/:userId/stats', async (req, res) => {
             TableName: "Reviews",
             IndexName: "userId-index",
             KeyConditionExpression: "userId = :uid",
-            ExpressionAttributeValues: { ":uid": userId },
+            FilterExpression: "attribute_exists(reviewText) AND reviewText <> :null",
+            ExpressionAttributeValues: {
+                ":uid": userId,
+                ":null": null
+            },
             Select: "COUNT"
         });
 
@@ -892,29 +899,43 @@ app.get("/lists/user/:userId", authMiddleware, async (req, res) => {
         const result = await db.send(command);
         const lists = result.Items || [];
 
-        // For each list, fetch the movies
+        // For each list, fetch the movies and collaborators
         const listsWithMovies = await Promise.all(
             lists.map(async (list) => {
                 try {
-                    const moviesResult = await db.send(
-                        new QueryCommand({
-                            TableName: "ListMovies",
-                            KeyConditionExpression: "listId = :listId",
-                            ExpressionAttributeValues: {
-                                ":listId": list.listId,
-                            },
-                        })
-                    );
+                    // Fetch movies and collaborators in parallel
+                    const [moviesResult, collaboratorsResult] = await Promise.all([
+                        db.send(
+                            new QueryCommand({
+                                TableName: "ListMovies",
+                                KeyConditionExpression: "listId = :listId",
+                                ExpressionAttributeValues: {
+                                    ":listId": list.listId,
+                                },
+                            })
+                        ),
+                        db.send(
+                            new QueryCommand({
+                                TableName: "ListCollaborators",
+                                KeyConditionExpression: "listId = :listId",
+                                ExpressionAttributeValues: {
+                                    ":listId": list.listId,
+                                },
+                            })
+                        )
+                    ]);
 
                     return {
                         ...list,
                         movies: moviesResult.Items || [],
+                        collaborators: collaboratorsResult.Items || [],
                     };
                 } catch (err) {
-                    console.error(`Error fetching movies for list ${list.listId}:`, err);
+                    console.error(`Error fetching details for list ${list.listId}:`, err);
                     return {
                         ...list,
                         movies: [],
+                        collaborators: [],
                     };
                 }
             })
@@ -1068,6 +1089,7 @@ app.get("/lists/:listId", authMiddleware, async (req, res) => {
             collaborators,
             isOwner: isOwner,
             isCollaborator: isCollaborator,
+            canEdit: isOwner || (isCollaborator && (listResult.Item.canEdit !== false)),
         });
     } catch (err) {
         console.error("GET LIST ERROR:", err);
@@ -1327,6 +1349,7 @@ app.post("/lists/:listId/collaborators", authMiddleware, async (req, res) => {
             addedBy: ownerId,
             addedAt: new Date().toISOString(),
             role: "collaborator",
+            canEdit: true, // Default to true for backward compatibility
         };
 
         await db.send(
@@ -1379,6 +1402,52 @@ app.delete("/lists/:listId/collaborators/:userId", authMiddleware, async (req, r
         res.json({ message: "Collaborator removed successfully" });
     } catch (err) {
         console.error("REMOVE COLLABORATOR ERROR:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 🔄 Update collaborator permissions - PROTECTED ROUTE (owner only)
+app.put("/lists/:listId/collaborators/:userId", authMiddleware, async (req, res) => {
+    try {
+        const { listId, userId: collaboratorUserId } = req.params;
+        const { canEdit } = req.body;
+        const ownerId = req.user.uid;
+
+        if (typeof canEdit !== 'boolean') {
+            return res.status(400).json({ error: "canEdit must be a boolean" });
+        }
+
+        // Get the list and verify ownership
+        const listResult = await db.send(
+            new GetCommand({
+                TableName: "Lists",
+                Key: { listId },
+            })
+        );
+
+        if (!listResult.Item) {
+            return res.status(404).json({ error: "List not found" });
+        }
+
+        if (listResult.Item.ownerId !== ownerId) {
+            return res.status(403).json({ error: "Only the list owner can update permissions" });
+        }
+
+        // Update collaborator permission
+        await db.send(
+            new UpdateCommand({
+                TableName: "ListCollaborators",
+                Key: { listId, userId: collaboratorUserId },
+                UpdateExpression: "set canEdit = :canEdit",
+                ExpressionAttributeValues: {
+                    ":canEdit": canEdit
+                }
+            })
+        );
+
+        res.json({ message: "Collaborator permissions updated", canEdit });
+    } catch (err) {
+        console.error("UPDATE COLLABORATOR PERMISSION ERROR:", err);
         res.status(500).json({ error: err.message });
     }
 });

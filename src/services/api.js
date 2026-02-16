@@ -327,6 +327,19 @@ export const addCollaborator = async (listId, userId) => {
  * @param {string} userId - User ID to remove
  * @returns {Promise<Object>} Success message
  */
+export const updateCollaboratorPermission = async (listId, userId, canEdit) => {
+    try {
+        const response = await apiFetch(`/lists/${listId}/collaborators/${userId}`, {
+            method: 'PUT',
+            body: JSON.stringify({ canEdit })
+        });
+        return response;
+    } catch (error) {
+        console.error('Error updating collaborator permission:', error);
+        throw error;
+    }
+};
+
 export const removeCollaborator = async (listId, userId) => {
     return apiFetch(`/lists/${listId}/collaborators/${userId}`, {
         method: 'DELETE',

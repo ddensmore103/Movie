@@ -37,6 +37,62 @@
     margin: 0 0 var(--space-sm) 0;
 }
 
+.movie-year {
+    font-weight: 600;
+}
+
+.movie-rating {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Poster wrapper - contains image and added-by indicator */
+.movie-poster-wrapper {
+    position: relative;
+    overflow: hidden;
+}
+
+/* Added By - expanding pill at bottom-left of poster */
+.list-movie-added-by {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    z-index: 5;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    padding: 3px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    display: flex;
+    align-items: center;
+    gap: 0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+    transition: all 0.25s ease;
+    max-width: 34px;
+    overflow: hidden;
+}
+
+.list-movie-added-by:hover {
+    max-width: 200px;
+    gap: 6px;
+    padding-right: 10px;
+}
+
+.added-by-name {
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 500;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.2s ease 0.05s;
+}
+
+.list-movie-added-by:hover .added-by-name {
+    opacity: 1;
+}
+
 .title-row {
     display: flex;
     align-items: center;

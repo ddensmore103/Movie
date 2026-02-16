@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getFriends, addCollaborator, removeCollaborator, getListCollaborators } from '../services/api';
+import { getFriends, addCollaborator, removeCollaborator, getListCollaborators, updateCollaboratorPermission } from '../services/api';
 import UserAvatar from './UserAvatar';
 import './ManageCollaboratorsModal.css';
 
@@ -57,6 +57,20 @@ const ManageCollaboratorsModal = ({ listId, isOwner, onClose }) => {
         }
     };
 
+    const handleUpdatePermission = async (userId, canEdit) => {
+        try {
+            // Optimistic update
+            setCollaborators(prev => prev.map(c =>
+                c.userId === userId ? { ...c, canEdit } : c
+            ));
+            await updateCollaboratorPermission(listId, userId, canEdit);
+        } catch (err) {
+            console.error('Error updating permission:', err);
+            alert('Failed to update permission');
+            await fetchData(); // Revert on error
+        }
+    };
+
     // Get friends who aren't already collaborators
     const collaboratorIds = new Set(collaborators.map(c => c.userId));
     const availableFriends = friends.filter(f => !collaboratorIds.has(f.userId));
@@ -90,24 +104,41 @@ const ManageCollaboratorsModal = ({ listId, isOwner, onClose }) => {
                                                     to={`/profile/${collab.userId}`}
                                                     className="collaborator-name collaborator-link"
                                                     onClick={onClose}
+                                                    state={{ fromCollaboratorsModal: true, listId }}
                                                 >
                                                     {collab.user?.username || collab.user?.email || 'Unknown'}
                                                 </Link>
                                                 <div className="collaborator-email">{collab.user?.email}</div>
                                             </div>
-                                            {isOwner && (
-                                                <button
-                                                    className="remove-button"
-                                                    onClick={() => handleRemoveCollaborator(collab.userId)}
-                                                >
-                                                    Remove
-                                                </button>
-                                            )}
+                                            <div className="collaborator-actions">
+                                                {isOwner && (
+                                                    <div className="can-edit-control">
+                                                        <label className="toggle">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={collab.canEdit !== false}
+                                                                onChange={(e) => handleUpdatePermission(collab.userId, e.target.checked)}
+                                                            />
+                                                            <span className="toggle-slider"></span>
+                                                        </label>
+                                                        <span className="can-edit-text">Can Edit</span>
+                                                    </div>
+                                                )}
+                                                {isOwner && (
+                                                    <button
+                                                        className="remove-button"
+                                                        onClick={() => handleRemoveCollaborator(collab.userId)}
+                                                        title="Remove collaborator"
+                                                    >
+                                                        ✕
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
                             ) : (
-                                <p className="empty-message">No collaborators yet</p>
+                                <p className="no-collaborators">No collaborators yet.</p>
                             )}
                         </section>
 

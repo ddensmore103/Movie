@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { getUser, getUserLists, getFriends, getUserFriends, getUserReviews, getActivityFeed, getUserStats, updateUserProfile, sendFriendRequest, getSentFriendRequests, getPendingFriendRequests } from '../services/api';
+import { getUser, getUserLists, getFriends, getUserFriends, getUserReviews, getUserStats, updateUserProfile, sendFriendRequest, getSentFriendRequests, getPendingFriendRequests } from '../services/api';
 import { LuVideo, LuStar, LuList, LuUsers, LuLock, LuUserPlus, LuCheck, LuClock } from 'react-icons/lu';
 import ActivityCard from '../components/ActivityCard';
 import UserAvatar from '../components/UserAvatar';
@@ -135,28 +135,22 @@ const Profile = () => {
 
             // 2. Fetch Content (Lists, Friends, Reviews, Activity)
             try {
-                const [userLists, userFriends, userReviews, userActivity] = await Promise.all([
+                const [userLists, userFriends, userReviews] = await Promise.all([
                     getUserLists(targetUserId),
                     getUserFriends(targetUserId),
-                    getUserReviews(targetUserId),
-                    isOwnProfile ? getActivityFeed() : getUserReviews(targetUserId).then(reviews => reviews.slice(0, 10))
+                    getUserReviews(targetUserId)
                 ]);
 
-                // Sort: Starred first
-                const sortedLists = userLists.sort((a, b) => {
-                    if (a.isStarred === b.isStarred) {
-                        return new Date(b.createdAt) - new Date(a.createdAt);
-                    }
-                    return a.isStarred ? -1 : 1;
-                });
-
-                setLists(sortedLists);
-                setFriends(userFriends);
-                setReviews(userReviews);
-                setActivity(userActivity);
+                if (userLists) setLists(userLists);
+                if (userFriends) setFriends(userFriends);
+                if (userReviews) {
+                    setReviews(userReviews);
+                    // Use user's reviews as their recent activity, limited to 10
+                    setActivity(userReviews.slice(0, 10));
+                }
 
                 // Fallback for stats if separate fetch failed
-                if (!fetchedStats) {
+                if (!fetchedStats && userLists && userReviews && userFriends) {
                     const reviewCount = userReviews.filter(r => r.reviewText && r.reviewText.trim()).length;
                     setStats([
                         { label: userLists.length === 1 ? 'List Created' : 'Lists Created', value: userLists.length, icon: <LuList /> },
@@ -233,11 +227,14 @@ const Profile = () => {
     return (
         <div className="profile-page">
             {/* Back button when viewing another user's profile */}
-            {!isOwnProfile && (
+            {/* Back button when viewing another user's profile */}
+            {(!isOwnProfile || location.state?.fromCollaboratorsModal) && (
                 <button
                     className="back-button"
                     onClick={() => {
-                        if (location.state?.from === 'admin') {
+                        if (location.state?.fromCollaboratorsModal && location.state?.listId) {
+                            navigate(`/lists/${location.state.listId}`);
+                        } else if (location.state?.from === 'admin') {
                             navigate('/admin');
                         } else {
                             navigate('/friends');
@@ -255,10 +252,15 @@ const Profile = () => {
                         fontWeight: '500',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '8px'
+                        gap: '8px',
+                        width: 'fit-content'
                     }}
                 >
-                    {location.state?.from === 'admin' ? '← Back to Admin' : '← Back to Friends'}
+                    {location.state?.fromCollaboratorsModal
+                        ? '← Back to List'
+                        : location.state?.from === 'admin'
+                            ? '← Back to Admin'
+                            : '← Back to Friends'}
                 </button>
             )}
 
@@ -391,7 +393,7 @@ const Profile = () => {
                                     {activity.map((item, index) => (
                                         <ActivityCard
                                             key={item.reviewId || index}
-                                            activity={item}
+                                            activity={{ ...item, user: displayUser || item.user }}
                                             onClick={() => {
                                                 // Navigate to movie details if needed
                                                 if (item.tmdbId) {

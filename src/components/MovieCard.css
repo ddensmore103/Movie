@@ -52,6 +52,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    /* Center play button */
     gap: var(--space-md);
     opacity: 0;
     transition: opacity var(--transition-base);
@@ -156,11 +157,88 @@
     align-items: center;
     gap: var(--space-xs);
     color: var(--color-text-secondary);
+    color: var(--color-primary);
+    font-size: var(--font-size-sm);
     font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    box-shadow: var(--shadow-md);
 }
 
 .star-icon {
     font-size: var(--font-size-base);
+}
+
+/* Added By User - Bottom Left of Overlay */
+.movie-added-by {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.6);
+    border-radius: 50%;
+    padding: 2px;
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.added-by-tooltip {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    margin-bottom: 8px;
+    z-index: 20;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.movie-added-by:hover .added-by-tooltip {
+    opacity: 1;
+}
+
+/* Star Button */
+.movie-star-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+    padding: 0;
+    margin-left: auto;
+    /* Push to right */
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: all var(--transition-fast);
+}
+
+.movie-star-btn:hover {
+    color: var(--text-primary);
+    transform: scale(1.1);
+}
+
+.movie-star-btn.starred {
+    color: var(--color-warning);
+    /* Starred color */
+}
+
+.star-count {
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-left: 2px;
 }
 
 /* Skeleton Loading State */

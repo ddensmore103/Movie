@@ -155,9 +155,75 @@
     white-space: nowrap;
 }
 
+.collaborator-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.can-edit-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.can-edit-text {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.7);
+    white-space: nowrap;
+}
+
+/* Toggle Switch - matches Settings page */
+.toggle {
+    position: relative;
+    display: inline-block;
+    width: 52px;
+    height: 28px;
+    flex-shrink: 0;
+}
+
+.toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.15);
+    transition: all 0.25s;
+    border-radius: 999px;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: all 0.25s;
+    border-radius: 50%;
+}
+
+.toggle input:checked+.toggle-slider {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.toggle input:checked+.toggle-slider:before {
+    transform: translateX(24px);
+}
+
 .add-button,
 .remove-button {
-    padding: 8px 16px;
     border-radius: 8px;
     font-size: 0.9rem;
     font-weight: 500;
@@ -167,6 +233,7 @@
 }
 
 .add-button {
+    padding: 8px 16px;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: #fff;
 }
@@ -182,14 +249,23 @@
 }
 
 .remove-button {
-    background: rgba(255, 107, 107, 0.1);
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 107, 107, 0.08);
     color: #ff6b6b;
-    border: 1px solid rgba(255, 107, 107, 0.3);
+    border: 1px solid rgba(255, 107, 107, 0.2);
+    border-radius: 50%;
+    font-size: 0.85rem;
 }
 
 .remove-button:hover {
     background: rgba(255, 107, 107, 0.2);
     border-color: rgba(255, 107, 107, 0.5);
+    transform: scale(1.1);
 }
 
 .empty-message {
