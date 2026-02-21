@@ -277,10 +277,19 @@ const MovieDetail = () => {
                 {/* Cast Section */}
                 {cast.length > 0 && (
                     <section className="cast-section">
-                        <h2 className="section-title">Cast</h2>
+                        <div className="cast-section-header">
+                            <h2 className="section-title">Cast</h2>
+                            <button className="section-link" onClick={() => navigate(`/movie/${id}/cast`)}>
+                                See All →
+                            </button>
+                        </div>
                         <div className="cast-grid">
                             {cast.map(actor => (
-                                <div key={actor.id} className="cast-card">
+                                <div
+                                    key={actor.id}
+                                    className="cast-card clickable"
+                                    onClick={() => navigate(`/actor/${actor.id}`)}
+                                >
                                     <div className="cast-photo">
                                         {actor.profile_path ? (
                                             <img

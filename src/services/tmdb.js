@@ -113,6 +113,18 @@ export const tmdbAPI = {
   // Get collection (movie series)
   getCollection: async (collectionId) => {
     return fetchFromTMDB(`/collection/${collectionId}`);
+  },
+
+  // Get person (actor) details with movie credits
+  getPersonDetails: async (personId) => {
+    return fetchFromTMDB(`/person/${personId}`, {
+      append_to_response: 'movie_credits'
+    });
+  },
+
+  // Get person movie credits (standalone)
+  getPersonMovieCredits: async (personId) => {
+    return fetchFromTMDB(`/person/${personId}/movie_credits`);
   }
 };
 

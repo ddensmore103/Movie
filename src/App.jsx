@@ -17,6 +17,8 @@ import AllMovies from './pages/AllMovies';
 import AllRecommendations from './pages/AllRecommendations';
 import Admin from './pages/Admin';
 import EditProfile from './pages/EditProfile';
+import FullCast from './pages/FullCast';
+import ActorDetail from './pages/ActorDetail';
 import './App.css';
 
 /**
@@ -61,6 +63,8 @@ function AppContent() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/movie/:id" element={<MovieDetail />} />
+          <Route path="/movie/:id/cast" element={<FullCast />} />
+          <Route path="/actor/:id" element={<ActorDetail />} />
           <Route path="/activity" element={<AllActivity />} />
           <Route path="/movies" element={<AllMovies />} />
           <Route path="/recommendations" element={<AllRecommendations />} />

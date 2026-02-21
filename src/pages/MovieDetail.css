@@ -176,11 +176,21 @@
     margin-top: var(--space-3xl);
 }
 
+.cast-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
 .cast-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
     gap: var(--space-lg);
     margin-top: var(--space-lg);
+}
+
+.cast-card.clickable {
+    cursor: pointer;
 }
 
 .cast-card {

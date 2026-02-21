@@ -35,6 +35,23 @@ const Sidebar = () => {
         ? [...navItems, { path: '/admin', icon: <FiShield />, label: 'Admin' }]
         : navItems;
 
+    // Tooltip state
+    const [hoveredItem, setHoveredItem] = useState(null);
+
+    const handleMouseEnter = (e, label) => {
+        if (isOpen) return; // No tooltip when expanded
+        const rect = e.currentTarget.getBoundingClientRect();
+        setHoveredItem({
+            label,
+            top: rect.top + (rect.height / 2),
+            left: rect.right + 10
+        });
+    };
+
+    const handleMouseLeave = () => {
+        setHoveredItem(null);
+    };
+
     return (
         <>
             {/* Hamburger Button */}
@@ -74,6 +91,8 @@ const Sidebar = () => {
                             state={item.path === '/' ? { resetSearch: true } : undefined}
                             className={`nav-item ${location.pathname === item.path ? 'active' : ''}`}
                             onClick={() => setIsOpen(false)}
+                            onMouseEnter={(e) => handleMouseEnter(e, item.label)}
+                            onMouseLeave={handleMouseLeave}
                             data-label={item.label}
                         >
                             <span className="nav-icon">{item.icon}</span>
@@ -86,12 +105,39 @@ const Sidebar = () => {
                     <button
                         className="logout-btn"
                         onClick={handleLogout}
+                        onMouseEnter={(e) => handleMouseEnter(e, 'Logout')}
+                        onMouseLeave={handleMouseLeave}
                     >
                         <span className="nav-icon"><FiLogOut /></span>
                         <span className="nav-label">Logout</span>
                     </button>
                 </div>
             </aside>
+
+            {/* Portal Tooltip */}
+            {hoveredItem && !isOpen && (
+                <div
+                    style={{
+                        position: 'fixed',
+                        top: hoveredItem.top,
+                        left: hoveredItem.left,
+                        transform: 'translateY(-50%)',
+                        background: 'var(--color-bg-primary)',
+                        color: 'var(--color-text-primary)',
+                        padding: 'var(--space-xs) var(--space-md)',
+                        borderRadius: 'var(--radius-md)',
+                        fontSize: 'var(--font-size-sm)',
+                        fontWeight: '500',
+                        border: '1px solid var(--color-border)',
+                        boxShadow: 'var(--shadow-md)',
+                        zIndex: 9999,
+                        whiteSpace: 'nowrap',
+                        pointerEvents: 'none',
+                    }}
+                >
+                    {hoveredItem.label}
+                </div>
+            )}
         </>
     );
 };

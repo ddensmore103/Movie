@@ -294,7 +294,7 @@ const Friends = () => {
                     </div>
                 ) : recentActivity.length > 0 ? (
                     <div className="friends-activity-feed">
-                        {recentActivity.map((activity) => (
+                        {recentActivity.slice(0, 5).map((activity) => (
                             <ActivityCard
                                 key={activity.reviewId || activity.id}
                                 activity={activity}

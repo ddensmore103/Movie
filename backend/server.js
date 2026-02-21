@@ -1943,8 +1943,8 @@ app.get("/activity/feed", authMiddleware, async (req, res) => {
             return dateB - dateA;
         });
 
-        // Limit to 30 most recent
-        const recentReviews = allReviews.slice(0, 30);
+        // Limit to 50 most recent
+        const recentReviews = allReviews.slice(0, 50);
 
         // Fetch user details for each review
         const reviewsWithUsers = await Promise.all(

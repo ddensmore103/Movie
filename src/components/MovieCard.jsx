@@ -36,12 +36,21 @@ const MovieCard = ({ movie, onClick, onAddToList, onToggleStar, currentUserId, i
     return (
         <div className="movie-card" onClick={onClick}>
             <div className="movie-poster">
-                <img
-                    src={getImageUrl(poster_path, 'medium', 'poster')}
-                    alt={title}
-                    loading="lazy"
-                    onError={(e) => e.target.src = '/placeholder-movie.jpg'} // Fallback for broken images
-                />
+                {poster_path ? (
+                    <img
+                        src={getImageUrl(poster_path, 'medium', 'poster')}
+                        alt={title}
+                        loading="lazy"
+                        onError={(e) => {
+                            e.target.style.display = 'none';
+                            e.target.nextElementSibling && (e.target.nextElementSibling.style.display = 'flex');
+                        }}
+                    />
+                ) : null}
+                <div className="movie-poster-placeholder" style={poster_path ? { display: 'none' } : {}}>
+                    <span className="poster-placeholder-icon">🎬</span>
+                    <span className="poster-placeholder-text">{title}</span>
+                </div>
                 <div className="movie-overlay">
                     <button className="play-btn">▶</button>
 
