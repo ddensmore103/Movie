@@ -19,6 +19,7 @@ import Admin from './pages/Admin';
 import EditProfile from './pages/EditProfile';
 import FullCast from './pages/FullCast';
 import ActorDetail from './pages/ActorDetail';
+import ReviewsPage from './pages/ReviewsPage';
 import './App.css';
 
 /**
@@ -70,6 +71,7 @@ function AppContent() {
           <Route path="/recommendations" element={<AllRecommendations />} />
           <Route path="/lists" element={<Lists />} />
           <Route path="/lists/:listId" element={<ListDetail />} />
+          <Route path="/reviews" element={<ReviewsPage />} />
           <Route path="/friends" element={<Friends />} />
           <Route path="/profile/:userId" element={<Profile />} />
           <Route path="/profile/edit" element={<EditProfile />} />

@@ -433,6 +433,17 @@ export const getMyReviews = async () => {
 };
 
 /**
+ * Toggle like on a review
+ * @param {string} reviewId - Review ID
+ * @returns {Promise<Object>} { liked, likeCount, likedBy }
+ */
+export const toggleReviewLike = async (reviewId) => {
+    return apiFetch(`/reviews/${reviewId}/like`, {
+        method: 'POST',
+    });
+};
+
+/**
  * Get the current user's friends list
  * @returns {Promise<Array>} Array of friends
  */
@@ -453,6 +464,14 @@ export const getUserFriends = async (userId) => {
     const result = await apiFetch(`/friends/user/${userId}`);
     console.log('getUserFriends result:', result);
     return result;
+};
+
+/**
+ * Get trending reviews (most liked)
+ * @returns {Promise<Array>} Array of trending reviews with user details
+ */
+export const getTrendingReviews = async () => {
+    return apiFetch('/reviews/trending');
 };
 
 /**

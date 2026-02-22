@@ -1,0 +1,318 @@
+.reviews-page {
+    padding: var(--space-2xl) var(--space-xl);
+    max-width: var(--max-content-width);
+    margin: 0 auto;
+    animation: fadeIn var(--transition-base) ease-out;
+}
+
+/* Header */
+.reviews-header {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    gap: var(--space-xl);
+    margin-bottom: var(--space-2xl);
+    padding-bottom: var(--space-xl);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.reviews-title {
+    font-size: var(--font-size-3xl);
+    font-weight: 800;
+    margin: 0;
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    white-space: nowrap;
+}
+
+.reviews-header-search {
+    width: 100%;
+    max-width: 600px;
+    justify-self: center;
+}
+
+/* ===== Search Bar ===== */
+.reviews-search-container {
+    position: relative;
+    width: 100%;
+}
+
+.reviews-search-bar {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    background: var(--color-bg-secondary);
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-full);
+    padding: var(--space-sm) var(--space-lg);
+    transition: all var(--transition-fast);
+}
+
+.reviews-search-bar:focus-within {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+}
+
+.reviews-search-icon {
+    font-size: var(--font-size-lg);
+    opacity: 0.6;
+    flex-shrink: 0;
+}
+
+.reviews-search-input {
+    flex: 1;
+    background: none;
+    border: none;
+    outline: none;
+    color: var(--color-text-primary);
+    font-size: var(--font-size-base);
+    padding: var(--space-xs) 0;
+}
+
+.reviews-search-input::placeholder {
+    color: var(--color-text-muted);
+}
+
+.reviews-search-clear {
+    background: var(--color-bg-tertiary);
+    border: none;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    font-size: var(--font-size-sm);
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+    flex-shrink: 0;
+}
+
+.reviews-search-clear:hover {
+    background: var(--color-bg-tertiary);
+    color: var(--color-text-primary);
+}
+
+/* ===== Search Suggestions ===== */
+.reviews-suggestions {
+    position: absolute;
+    top: calc(100% + var(--space-xs));
+    left: 0;
+    right: 0;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-xl);
+    z-index: 50;
+    overflow: hidden;
+}
+
+.reviews-suggestion-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-sm) var(--space-md);
+    cursor: pointer;
+    transition: background var(--transition-fast);
+}
+
+.reviews-suggestion-item:hover {
+    background: var(--color-bg-tertiary);
+}
+
+.reviews-suggestion-poster {
+    width: 36px;
+    height: 54px;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+    flex-shrink: 0;
+}
+
+.reviews-suggestion-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.reviews-suggestion-title {
+    color: var(--color-text-primary);
+    font-weight: 600;
+    font-size: var(--font-size-sm);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.reviews-suggestion-year {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-xs);
+}
+
+/* ===== Sections ===== */
+.reviews-section {
+    margin-bottom: var(--space-3xl);
+}
+
+.reviews-section .section-title {
+    font-size: var(--font-size-2xl);
+    font-weight: 700;
+    color: var(--color-text);
+    margin-bottom: var(--space-lg);
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.section-icon {
+    font-size: var(--font-size-xl);
+}
+
+/* ===== Movie Reviews Header (search result) ===== */
+.movie-reviews-section {
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-xl);
+}
+
+.movie-reviews-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-lg);
+    margin-bottom: var(--space-lg);
+}
+
+.movie-reviews-poster {
+    width: 50px;
+    height: 75px;
+    object-fit: cover;
+    border-radius: var(--radius-md);
+    flex-shrink: 0;
+}
+
+.movie-reviews-year {
+    font-weight: 400;
+    color: var(--color-text-secondary);
+    margin-left: var(--space-sm);
+    font-size: var(--font-size-base);
+}
+
+.view-movie-btn {
+    background: none;
+    border: none;
+    color: var(--color-primary);
+    cursor: pointer;
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    padding: var(--space-xs) 0;
+    transition: color var(--transition-fast);
+}
+
+.view-movie-btn:hover {
+    color: var(--color-secondary);
+}
+
+/* ===== Review with Movie Badge ===== */
+.review-with-movie {
+    margin-bottom: var(--space-md);
+}
+
+.review-movie-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-xs) var(--space-md);
+    background: var(--color-bg-tertiary);
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
+    border: 1px solid var(--color-border);
+    border-bottom: none;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    margin-left: var(--space-md);
+}
+
+.review-movie-badge:hover {
+    background: var(--color-bg-secondary);
+    color: var(--color-primary);
+}
+
+.review-movie-poster-small {
+    width: 20px;
+    height: 30px;
+    object-fit: cover;
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+
+.review-movie-title-badge {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--color-text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 250px;
+}
+
+.review-movie-badge:hover .review-movie-title-badge {
+    color: var(--color-primary);
+}
+
+.review-with-movie .review-card {
+    border-top-left-radius: 0;
+}
+
+/* ===== Reviews List ===== */
+.reviews-list {
+    display: flex;
+    flex-direction: column;
+}
+
+/* ===== Empty State (matches Friends page pattern) ===== */
+.empty-reviews {
+    text-align: center;
+    padding: var(--space-3xl);
+    color: var(--color-secondary);
+    background: var(--color-bg-secondary);
+    border-radius: var(--radius-lg);
+    border: 2px dashed var(--color-border);
+}
+
+/* ===== Loading ===== */
+.loading-container.small {
+    padding: var(--space-xl);
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+    .reviews-page {
+        padding: var(--space-xl) var(--space-md);
+    }
+
+    .reviews-header {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--space-md);
+    }
+
+    .reviews-title {
+        text-align: center;
+    }
+
+    .reviews-header-search {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .movie-reviews-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .review-movie-title-badge {
+        max-width: 180px;
+    }
+}

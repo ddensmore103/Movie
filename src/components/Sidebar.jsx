@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { FiHome, FiClipboard, FiUsers, FiUser, FiSettings, FiLogOut, FiShield } from 'react-icons/fi';
+import { FiHome, FiClipboard, FiMessageSquare, FiUsers, FiUser, FiSettings, FiLogOut, FiShield } from 'react-icons/fi';
 import './Sidebar.css';
 
 const Sidebar = () => {
@@ -12,6 +12,7 @@ const Sidebar = () => {
     const navItems = [
         { path: '/', icon: <FiHome />, label: 'Home' },
         { path: '/lists', icon: <FiClipboard />, label: 'Lists' },
+        { path: '/reviews', icon: <FiMessageSquare />, label: 'Reviews' },
         { path: '/friends', icon: <FiUsers />, label: 'Friends' },
         { path: '/profile', icon: <FiUser />, label: 'Profile' },
         { path: '/settings', icon: <FiSettings />, label: 'Settings' }

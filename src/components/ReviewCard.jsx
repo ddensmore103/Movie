@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { toggleReviewLike } from '../services/api';
 import StarRating from './StarRating';
 import ConfirmationModal from './ConfirmationModal';
 import UserAvatar from './UserAvatar';
@@ -9,8 +10,12 @@ const ReviewCard = ({ review, onEdit, onDelete }) => {
     const { currentUser } = useAuth();
     const [isDeleting, setIsDeleting] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [likedBy, setLikedBy] = useState(review.likedBy || []);
+    const [isLiking, setIsLiking] = useState(false);
 
     const isOwnReview = currentUser && review.userId === currentUser.uid;
+    const isLiked = currentUser ? likedBy.includes(currentUser.uid) : false;
+    const likeCount = likedBy.length;
 
     const handleDelete = async () => {
         setIsDeleting(true);
@@ -22,6 +27,29 @@ const ReviewCard = ({ review, onEdit, onDelete }) => {
         } finally {
             setIsDeleting(false);
             setShowDeleteConfirm(false);
+        }
+    };
+
+    const handleLike = async (e) => {
+        e.stopPropagation();
+        if (!currentUser || isLiking) return;
+
+        // Optimistic update
+        const prevLikedBy = [...likedBy];
+        setLikedBy(isLiked
+            ? likedBy.filter(id => id !== currentUser.uid)
+            : [...likedBy, currentUser.uid]
+        );
+        setIsLiking(true);
+
+        try {
+            const result = await toggleReviewLike(review.reviewId);
+            setLikedBy(result.likedBy || []);
+        } catch (error) {
+            console.error('Error toggling like:', error);
+            setLikedBy(prevLikedBy); // Revert on error
+        } finally {
+            setIsLiking(false);
         }
     };
 
@@ -102,6 +130,20 @@ const ReviewCard = ({ review, onEdit, onDelete }) => {
                         {review.reviewText}
                     </div>
                 )}
+
+                {currentUser && (
+                    <div className="review-like-section">
+                        <button
+                            className={`like-btn ${isLiked ? 'liked' : ''}`}
+                            onClick={handleLike}
+                            disabled={isLiking}
+                            title={isLiked ? 'Unlike' : 'Like'}
+                        >
+                            <span className="like-icon">{isLiked ? '❤️' : '🤍'}</span>
+                            {likeCount > 0 && <span className="like-count">{likeCount}</span>}
+                        </button>
+                    </div>
+                )}
             </div>
 
             <ConfirmationModal
@@ -118,3 +160,4 @@ const ReviewCard = ({ review, onEdit, onDelete }) => {
 };
 
 export default ReviewCard;
+

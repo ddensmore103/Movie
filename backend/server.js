@@ -2132,6 +2132,55 @@ app.delete("/reviews/:reviewId", authMiddleware, async (req, res) => {
     }
 });
 
+// ❤️ Toggle like on a review - PROTECTED ROUTE
+app.post("/reviews/:reviewId/like", authMiddleware, async (req, res) => {
+    try {
+        const { reviewId } = req.params;
+        const userId = req.user.uid;
+
+        // Get the review
+        const reviewResult = await db.send(
+            new GetCommand({
+                TableName: "Reviews",
+                Key: { reviewId },
+            })
+        );
+
+        if (!reviewResult.Item) {
+            return res.status(404).json({ error: "Review not found" });
+        }
+
+        const review = reviewResult.Item;
+        const likedBy = review.likedBy || [];
+        const alreadyLiked = likedBy.includes(userId);
+
+        // Toggle like
+        const updatedLikedBy = alreadyLiked
+            ? likedBy.filter(id => id !== userId)
+            : [...likedBy, userId];
+
+        // Update the review
+        await db.send(
+            new PutCommand({
+                TableName: "Reviews",
+                Item: {
+                    ...review,
+                    likedBy: updatedLikedBy,
+                },
+            })
+        );
+
+        res.json({
+            liked: !alreadyLiked,
+            likeCount: updatedLikedBy.length,
+            likedBy: updatedLikedBy,
+        });
+    } catch (err) {
+        console.error("TOGGLE REVIEW LIKE ERROR:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // 🔍 Get all reviews for a specific movie
 app.get("/reviews/movie/:movieId", async (req, res) => {
     try {
@@ -2243,6 +2292,58 @@ app.get("/reviews/my-reviews", authMiddleware, async (req, res) => {
         res.json(result.Items || []);
     } catch (err) {
         console.error("GET MY REVIEWS ERROR:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 🔥 Get trending reviews (most liked) - PROTECTED ROUTE
+app.get("/reviews/trending", authMiddleware, async (req, res) => {
+    try {
+        // Scan all reviews (DynamoDB has no index on likedBy length)
+        const scanResult = await db.send(new ScanCommand({
+            TableName: "Reviews",
+        }));
+
+        const allReviews = scanResult.Items || [];
+
+        // Sort by like count first, then by movie popularity (stored as vote_average or popularity on the review if available)
+        const sortedReviews = allReviews
+            .filter(r => r.reviewText && r.reviewText.trim()) // Only reviews with text
+            .sort((a, b) => {
+                const likeDiff = (b.likedBy?.length || 0) - (a.likedBy?.length || 0);
+                if (likeDiff !== 0) return likeDiff;
+                // Fallback: sort by movie popularity (use rating as proxy)
+                return (b.rating || 0) - (a.rating || 0);
+            })
+            .slice(0, 20);
+
+        // Fetch user details for each review
+        const reviewsWithUsers = await Promise.all(
+            sortedReviews.map(async (review) => {
+                try {
+                    const userResult = await db.send(
+                        new GetCommand({
+                            TableName: "Users",
+                            Key: { userId: review.userId },
+                        })
+                    );
+                    return {
+                        ...review,
+                        user: userResult.Item || { userId: review.userId, username: "Unknown" },
+                    };
+                } catch (err) {
+                    console.error(`Error fetching user ${review.userId}:`, err);
+                    return {
+                        ...review,
+                        user: { userId: review.userId, username: "Unknown" },
+                    };
+                }
+            })
+        );
+
+        res.json(reviewsWithUsers);
+    } catch (err) {
+        console.error("GET TRENDING REVIEWS ERROR:", err);
         res.status(500).json({ error: err.message });
     }
 });
